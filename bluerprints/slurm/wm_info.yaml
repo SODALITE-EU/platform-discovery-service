@@ -1,0 +1,81 @@
+tosca_definitions_version: tosca_simple_yaml_1_3 
+
+node_types:
+  
+  sodalite.nodes.hpc.wm.slurm: 
+    description: >
+      slurm wm, here we can define properties/attributes applicable for slurm WM
+    derived_from: tosca.nodes.Compute
+    attributes:
+      username:
+        type: string
+      ssh-key:
+        type: string
+
+  sodalite.nodes.hpc.wm.slurm.info: 
+    derived_from: tosca.nodes.Root
+    requirements:
+      - host:
+          node: sodalite.nodes.hpc.wm.slurm
+          capability: tosca.capabilities.Compute
+          relationship: tosca.relationships.HostedOn   
+    attributes:
+      node_info:
+        type: string           
+    interfaces:
+        Standard:
+          type: tosca.interfaces.node.lifecycle.Standard
+          operations:
+            create:
+              inputs:
+                wm_public_address:           { type: string, default: { get_attribute: [SELF, host, public_address] } }
+                wm_username:                 { type: string, default: { get_attribute: [SELF, host, username] } }
+                wm_keypath:                  { type: string, default: { get_attribute: [SELF, host, ssh-key] } }
+              implementation: 
+                primary: playbooks/slurm_get_info.yml
+
+
+  sodalite.nodes.hpc.wm.slurm.transform: 
+    derived_from: tosca.nodes.Root
+    requirements:
+      - info:
+          node: sodalite.nodes.hpc.wm.slurm.info
+          capability: tosca.capabilities.Root
+          relationship: tosca.relationships.DependsOn   
+    interfaces:
+        Standard:
+          type: tosca.interfaces.node.lifecycle.Standard
+          operations:
+            create:
+              inputs:
+                wm_info:                     { type: string, default: { get_attribute: [SELF, info, node_info] } }
+              implementation: 
+                primary: playbooks/slurm_transform_info.yml                
+
+topology_template:
+
+  inputs:
+    frontend-address:
+      type: string
+    user:
+      type: string
+    key-location:
+      type: string
+
+  node_templates:
+
+    hpc-wm-slurm:
+      type: sodalite.nodes.hpc.wm.slurm
+      attributes:
+        public_address: { get_input: frontend-address }
+        username: { get_input: user }
+        ssh-key: { get_input: key-location }
+
+    hpc-wm-slurm-info:
+      type: sodalite.nodes.hpc.wm.slurm.info
+      requirements:
+        - host: hpc-wm-slurm         
+
+  outputs:
+    output-slurm-info:      
+      value: { get_attribute: [ hpc-wm-slurm-info, node_info ] }        

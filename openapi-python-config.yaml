@@ -1,0 +1,9 @@
+sortParamsByRequiredFlag: true
+# must be false, otherwise python files get sorted unintelligently, and commas in multiline lists don't match
+sortModelPropertiesByRequiredFlag: false
+ensureUniqueParams: true
+allowUnicodeIdentifiers: false
+prependFormOrBodyParameters: false
+packageName: pds.api.openapi
+controllerPackage: CONTROLLER_PACKAGE_MATCH_ANCHOR
+supportPython2: false

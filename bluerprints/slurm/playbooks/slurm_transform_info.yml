@@ -1,0 +1,6 @@
+- hosts: localhost
+  gather_facts: no
+  tasks:   
+    - name: Convert to TOSCA
+      set_fact:
+        rendered_template: "{{ lookup('template', './slurm.j2') }}"

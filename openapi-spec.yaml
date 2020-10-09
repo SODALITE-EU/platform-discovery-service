@@ -1,0 +1,73 @@
+openapi: "3.0.0"
+info:
+  version: 0.1.0
+  title: Platform Discovery Service API
+  license:
+    name: Apache-2.0
+paths:
+  /discover:
+    post:
+      security:
+        - oauth2: [uid] 
+      summary: Automatic discovery and modeling of infrastructural resources. 
+      operationId: discover
+      requestBody:
+        description: Endpoint information and access credentials.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DiscoveryInput"
+      responses:
+        "202":
+          description: The discovery was successful.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DiscoveryOutput"
+        "500":
+          description: There was an error during discovery.
+ 
+components:
+  schemas:
+    DiscoveryInput:
+      description: Endpoint information and access credentials provided as inputs.
+      type: object
+      required:
+        - inputs
+      properties:
+        inputs:
+          type: object
+        platform_type:
+          $ref: "#/components/schemas/PlatformType"
+    DiscoveryOutput:
+      description: An invocation of the deployment.
+      type: object
+      required:
+        - timestamp
+        - service_template
+      properties:
+        timestamp:
+          description: An ISO8601 timestamp of the discovery.
+          type: string
+        service_template:
+          description: The service template with discovered info.
+          type: object
+    PlatformType:
+      type: string
+      enum:
+        - slurm
+        - torque
+        - openstack
+        - aws          
+
+  securitySchemes:
+    oauth2:
+      flows:
+        password: 
+          tokenUrl: http://localhost:8080/auth/realms/SODALITE/protocol/openid-connect/token
+          scopes:
+            uid: Unique identifier of the user accessing the service.
+      type: oauth2
+      x-tokenInfoFunc: pds.api.controllers.security.token_info
+      x-scopeValidateFunc: pds.api.controllers.security.validate_scope      
