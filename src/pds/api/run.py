@@ -13,7 +13,11 @@ def main():
                         )
 
     app.app.json_encoder = encoder.JSONEncoder
-    app.add_api("openapi.yaml", arguments={"title": "Platform Discovery Service API"}, pythonic_params=True)
+    app.add_api(
+        "openapi.yaml",
+        arguments={"title": "Platform Discovery Service API"},
+        pythonic_params=True
+        )
     app.app.config.update({
         'OIDC_INTROSPECTION_ENDPOINT': 'http://localhost:8080/auth/realms/SODALITE/protocol/openid-connect/token/introspect',
         'OIDC_CLIENT_ID': 'sodalite-ide',

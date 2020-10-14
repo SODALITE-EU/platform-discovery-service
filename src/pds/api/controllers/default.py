@@ -37,10 +37,19 @@ def discover(body: DiscoveryInput = None):  # noqa: E501
         discovery_input = DiscoveryInput.from_dict(connexion.request.get_json())  # noqa: E501
     path, template = _get_service_template(discovery_input.platform_type)
     os.chdir(path)
-    opera_storage = SafeStorage.create(current_app.config['STORAGE_KEY'].encode(), path + ".opera/")
-    opera_deploy(template, discovery_input.inputs, opera_storage,
-                 verbose_mode=True, num_workers=1, delete_existing_state=True)
-    result = opera_outputs(opera_storage)
+    try:
+        opera_storage = SafeStorage.create(
+            current_app.config['STORAGE_KEY'].encode(),
+            path + ".opera/"
+            )
+        opera_deploy(
+            template, discovery_input.inputs, opera_storage,
+            verbose_mode=True, num_workers=1, delete_existing_state=True
+            )
+        result = opera_outputs(opera_storage)
+    except Exception as ex:
+        return {"message": str(ex)}, 500
+            
     now = datetime.datetime.now(tz=datetime.timezone.utc)
     return DiscoveryOutput(now.isoformat(), result), 200
 

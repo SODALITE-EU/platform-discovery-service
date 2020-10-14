@@ -3,11 +3,14 @@ import pathlib
 from cryptography.fernet import Fernet
 from opera.storage import Storage
 
-class SafeStorage(Storage): 
+
+class SafeStorage(Storage):
 
     @classmethod
     def create(cls, key, instance_path: str = None) -> "SafeStorage":
-        return SafeStorage(pathlib.Path(instance_path or cls.DEFAULT_INSTANCE_PATH), key)
+        return SafeStorage(
+            pathlib.Path(instance_path or cls.DEFAULT_INSTANCE_PATH), key
+            )
 
     def __init__(self, path, key):
         super().__init__(path)
