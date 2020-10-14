@@ -6,11 +6,13 @@ from pds.api.openapi.models.discovery_input import DiscoveryInput  # noqa: E501
 from pds.api.openapi.models.discovery_output import DiscoveryOutput  # noqa: E501
 from pds.api.openapi.models.platform_type import PlatformType  # noqa: E501
 
+from pds.api.log import get_logger
 from opera.commands.deploy import deploy as opera_deploy
 from opera.commands.outputs import outputs as opera_outputs
 from pds.api.safe_storage import SafeStorage
 from flask import current_app
 
+logger = get_logger(__name__)
 
 def status():  # noqa: E501
     """Fetch the status of a deployment
@@ -33,6 +35,9 @@ def discover(body: DiscoveryInput = None):  # noqa: E501
 
     :rtype: DiscoveryOutput
     """
+    logger.debug("Entry: discover")
+    logger.debug(body)
+
     if connexion.request.is_json:
         discovery_input = DiscoveryInput.from_dict(connexion.request.get_json())  # noqa: E501
     path, template = _get_service_template(discovery_input.platform_type)
@@ -48,6 +53,7 @@ def discover(body: DiscoveryInput = None):  # noqa: E501
             )
         result = opera_outputs(opera_storage)
     except Exception as ex:
+        logger.exception(ex)
         return {"message": str(ex)}, 500
             
     now = datetime.datetime.now(tz=datetime.timezone.utc)
