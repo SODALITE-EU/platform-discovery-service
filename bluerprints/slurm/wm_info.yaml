@@ -21,6 +21,8 @@ node_types:
           relationship: tosca.relationships.HostedOn   
     attributes:
       node_info:
+        type: string      
+      partition_info:
         type: string           
     interfaces:
         Standard:
@@ -37,7 +39,17 @@ node_types:
 
   sodalite.nodes.hpc.wm.slurm.transform: 
     derived_from: tosca.nodes.Root
+    properties:
+      namespace:
+        type: string 
+    attributes:
+      transformation_result:
+        type: string    
     requirements:
+      - wm:
+          node: sodalite.nodes.hpc.wm.slurm
+          capability: tosca.capabilities.Root
+          relationship: tosca.relationships.DependsOn  
       - info:
           node: sodalite.nodes.hpc.wm.slurm.info
           capability: tosca.capabilities.Root
@@ -48,9 +60,14 @@ node_types:
           operations:
             create:
               inputs:
-                wm_info:                     { type: string, default: { get_attribute: [SELF, info, node_info] } }
+                frontend_address:              { type: string, default: { get_attribute: [SELF, wm, public_address] } }
+                namespace:                     { type: string, default: { get_property: [SELF, namespace] } }
+                node_info:                     { type: string, default: { get_attribute: [SELF, info, node_info] } }
+                partition_info:                { type: string, default: { get_attribute: [SELF, info, partition_info] } }
               implementation: 
-                primary: playbooks/slurm_transform_info.yml                
+                primary: playbooks/slurm_transform_info.yml
+                dependencies: 
+                  - artifacts/slurm.j2.yaml                
 
 topology_template:
 
@@ -61,6 +78,8 @@ topology_template:
       type: string
     key-location:
       type: string
+    namespace:
+      type: string      
 
   node_templates:
 
@@ -76,6 +95,15 @@ topology_template:
       requirements:
         - host: hpc-wm-slurm         
 
+    hpc-wm-slurm-transform:
+      type: sodalite.nodes.hpc.wm.slurm.transform
+      properties:
+        namespace: { get_input: namespace }
+      requirements:
+        - info: hpc-wm-slurm-info  
+        - wm: hpc-wm-slurm 
+                
+
   outputs:
-    output-slurm-info:      
-      value: { get_attribute: [ hpc-wm-slurm-info, node_info ] }        
+    output-slurm-tosca:      
+      value: { get_attribute: [ hpc-wm-slurm-transform, transformation_result ] }        

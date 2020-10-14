@@ -3,4 +3,8 @@
   tasks:   
     - name: Convert to TOSCA
       set_fact:
-        rendered_template: "{{ lookup('template', './slurm.j2') }}"
+        rendered_template: "{{ lookup('template', './slurm.j2.yaml') }}"
+    - name: Set attribute
+      set_stats:
+        data:
+          transformation_result: "{{ rendered_template }}"      

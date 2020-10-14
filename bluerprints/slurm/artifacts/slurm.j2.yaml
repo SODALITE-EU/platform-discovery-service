@@ -1,0 +1,151 @@
+tosca_definitions_version: tosca_simple_yaml_1_3 
+
+capability_types:
+
+  sodalite.capabilities.{{ namespace }}.Queue:
+    derived_from: tosca.capabilities.Compute
+
+  sodalite.capabilities.{{ namespace }}.WM:
+    derived_from: tosca.capabilities.Compute
+
+  sodalite.capabilities.{{ namespace }}.JobResources:
+    derived_from: tosca.capabilities.Compute
+    properties:
+      gpus:
+        type: integer
+        required: true
+      cpus:
+        type: integer
+        required: true
+      memory:
+        type: integer
+        required: false
+
+node_types:
+
+  sodalite.nodes.hpc.{{ namespace }}.SlurmNode:
+    derived_from: tosca.nodes.Compute
+    properties:
+      name:
+        type: string
+        required: true
+    capabilities:      
+      resources:
+        type: sodalite.capabilities.{{ namespace }}.JobResources        
+      os:
+        type: tosca.capabilities.OperatingSystem     
+    requirements:
+      - wm:                   
+          node: sodalite.nodes.hpc.{{ namespace }}.SlurmWM
+          capability: sodalite.capabilities.{{ namespace }}.WM
+          relationship: tosca.relationships.AttachesTo
+      - queue:                   
+          node: sodalite.nodes.hpc.{{ namespace }}.SlurmQueue
+          capability: sodalite.capabilities.{{ namespace }}.Queue
+          relationship: tosca.relationships.AttachesTo            
+
+  sodalite.nodes.hpc.{{ namespace }}.SlurmQueue:
+    derived_from: tosca.nodes.Compute
+    properties:
+      name:
+        type: string
+        required: true
+    capabilities:      
+      resources:
+        type: sodalite.capabilities.{{ namespace }}.JobResources
+    requirements:
+      - wm:                   
+          node: sodalite.nodes.hpc.{{ namespace }}.SlurmWM
+          capability: sodalite.capabilities.{{ namespace }}.WM
+          relationship: tosca.relationships.AttachesTo
+
+  sodalite.nodes.hpc.{{ namespace }}.SlurmWM: 
+    description: >
+      Slurm wm, here we can define properties/attributes applicable for Slurm WM
+    derived_from: tosca.nodes.Compute
+    attributes:
+      username:
+        type: string
+      ssh-key:
+        type: string
+    capabilities:
+      host:
+        type: tosca.capabilities.Compute
+      resources:
+        type: sodalite.capabilities.{{ namespace }}.JobResources  
+
+topology_template:
+
+  inputs:
+    user:
+      type: string
+    key-location:
+      type: string
+
+  node_templates:
+
+{% set total_gpus = [0] -%}
+{% set total_cpus = [0] -%}
+{% set total_memory = [0] -%}
+{% for node in node_info.slurm_node %}
+    node-hpc-{{ namespace }}-{{ node.NodeName | replace(" ","-") }}:
+      type: sodalite.nodes.hpc.{{ namespace }}.SlurmNode
+      properties:
+        name: {{ node.NodeName }}
+      capabilities:    
+        resources:
+          gpus: {{ node.GPU }} 
+          cpus: {{ node.CPUTot }}
+          memory: {{ node.RealMemory }}
+{% if "OS" in node %}
+        os:
+          type: {{ node.OS }} 
+{% endif %}
+      requirements:
+        - wm: hpc-wm-slurm-{{ namespace }}-wm
+        - queue: queue-hpc-{{ namespace }}-{{ node.Partitions | replace(" ","-") }}
+             
+{% if total_gpus.append(total_gpus.pop() + node.GPU|int) -%}{% endif %}
+{% if total_cpus.append(total_cpus.pop() + node.CPUTot|int) -%}{% endif %}
+{% if total_memory.append(total_memory.pop() + node.RealMemory|int) -%}{% endif %}
+
+{% endfor %}
+{% for partition in partition_info.slurm_partition %}
+{% set part_gpus = [0] -%}
+{% set part_cpus = [0] -%}
+{% set part_memory = [0] -%}
+{% for node in node_info.slurm_node %}
+{% if node.Partitions == partition.PartitionName -%}
+{% if part_gpus.append(part_gpus.pop() + node.GPU|int) -%}{% endif %}
+{% if part_cpus.append(part_cpus.pop() + node.CPUTot|int) -%}{% endif %}
+{% if part_memory.append(part_memory.pop() + node.RealMemory|int) -%}{% endif %}
+{% endif %}
+{% endfor %}
+    queue-hpc-{{ namespace }}-{{ partition.PartitionName | replace(" ","-") }}:
+      type: sodalite.nodes.hpc.{{ namespace }}.SlurmQueue
+      properties:
+        name: {{ partition.PartitionName }}
+      capabilities:    
+        resources:
+          gpus: {{ part_gpus[0] }} 
+          cpus: {{ part_cpus[0] }}
+          memory: {{ part_memory[0] }}           
+      requirements:
+        - wm: hpc-wm-slurm-{{ namespace }}-wm  
+
+{% endfor %}
+
+    hpc-wm-slurm-{{ namespace }}-wm:
+      type: sodalite.nodes.hpc.{{ namespace }}.SlurmWM
+      attributes:
+        public_address: {{ frontend_address }}
+        username: { get_input: user }
+        ssh-key: { get_input: key-location }
+      capabilities:    
+        resources:
+          gpus: {{ total_gpus[0] }} 
+          cpus: {{ total_cpus[0] }}
+          memory: {{ total_memory[0] }}
+
+
+       

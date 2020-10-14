@@ -25,7 +25,12 @@
         sodalite.discovery.slurm_node_info:
         register: node_info
 
+      - name: Get slurm partition info
+        sodalite.discovery.slurm_partition_info:
+        register: partition_info
+
       - name: Set attribute
         set_stats:
           data:
-            node_info: "{{ node_info }}"        
+            node_info: "{{ node_info }}"      
+            partition_info: "{{ partition_info }}"    
