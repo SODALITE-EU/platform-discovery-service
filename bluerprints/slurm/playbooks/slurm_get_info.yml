@@ -1,5 +1,5 @@
 ---
-  - hosts: all
+  - hosts: localhost
     gather_facts: no
     tasks:
       - name: >
@@ -11,7 +11,7 @@
           groups: wm
           ansible_host: "{{ wm_public_address }}"
           ansible_user: "{{ wm_username }}"
-          ansible_ssh_private_key_file: "{{ wm_keypath }}"
+          #ansible_ssh_private_key_file: "{{ wm_keypath }}"
           ansible_ssh_common_args: >
             -o IdentitiesOnly=yes
             -o BatchMode=yes
