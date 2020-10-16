@@ -1,0 +1,63 @@
+tosca_definitions_version: tosca_simple_yaml_1_3 
+
+node_types:
+
+  sodalite.nodes.ssh.key: 
+    derived_from: tosca.nodes.Root
+    requirements:
+      - host:
+          node: tosca.nodes.Compute
+          capability: tosca.capabilities.Compute
+          relationship: tosca.relationships.HostedOn   
+    properties:
+      ssh_key:
+        type: string      
+      ssh_key_password:
+        type: string           
+    interfaces:
+        Standard:
+          type: tosca.interfaces.node.lifecycle.Standard
+          operations:
+            create:
+              inputs:
+                ssh_key:                      { type: string, default: { get_property: [SELF, ssh_key] } }
+                ssh_key_password:             { type: string, default: { get_property: [SELF, ssh_key_password] } }
+              implementation: 
+                primary: playbooks/add_key.yml
+            delete:
+              implementation: 
+                primary: playbooks/remove_key.yml
+          
+
+topology_template:
+
+  inputs:
+    ssh-key:
+      type: string
+    ssh-key-password:
+      type: string      
+      
+    frontend-address:
+      type: string
+    user:
+      type: string
+    key-location:
+      type: string
+    key-value:
+      type: string
+    namespace:
+      type: string 
+  node_templates:
+
+    localhost:
+      type: tosca.nodes.Compute
+      attributes:
+        public_address: localhost
+
+    ssh-key:
+      type: sodalite.nodes.ssh.key
+      properties:
+        ssh_key: { get_input: ssh-key }
+        ssh_key_password: { get_input: ssh-key-password }
+      requirements:
+        - host: localhost
