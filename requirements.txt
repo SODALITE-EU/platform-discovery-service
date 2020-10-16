@@ -1,0 +1,9 @@
+ansible
+opera
+connexion[swagger-ui]
+python-dateutil >= 2.8.1
+pexpect
+
+twine
+wheel
+setuptools
