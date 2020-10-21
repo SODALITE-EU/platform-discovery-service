@@ -11,13 +11,10 @@ from opera.storage import Storage
 class SafeMemoryStorage(Storage):
 
     @classmethod
-    def create(cls, instance_path: str = None) -> "SafeMemoryStorage":
-        return SafeMemoryStorage(
-            pathlib.Path(instance_path or cls.DEFAULT_INSTANCE_PATH)
-            )
+    def create(cls) -> "SafeMemoryStorage":
+        return SafeMemoryStorage()
 
-    def __init__(self, path):
-        super().__init__(path)
+    def __init__(self):
         self.key = Fernet.generate_key()
         self.memStorage = {}
 
@@ -25,12 +22,12 @@ class SafeMemoryStorage(Storage):
         f = Fernet(self.key)
         encrypted_data = f.encrypt(content.encode())
         *subpath, name = path
-        dir_path = self.path / pathlib.PurePath(*subpath)
+        dir_path = pathlib.PurePath(*subpath)
         self.memStorage[str(dir_path / name)] = io.BytesIO(encrypted_data)
 
     def read(self, *path):
         f = Fernet(self.key)
-        dir_path = self.path / pathlib.PurePath(*path)
+        dir_path = pathlib.PurePath(*path)
         if self.exists(*path):
             encrypted_data = self.memStorage[str(dir_path)].getvalue()
             return f.decrypt(encrypted_data).decode()
@@ -38,10 +35,10 @@ class SafeMemoryStorage(Storage):
             errno.ENOENT, os.strerror(errno.ENOENT), str(dir_path))
 
     def exists(self, *path):
-        return str(self.path / pathlib.PurePath(*path)) in self.memStorage
+        return str(pathlib.PurePath(*path)) in self.memStorage
 
     def remove(self, *path):
-        mem = self.memStorage.pop(str(self.path / pathlib.PurePath(*path)), None)
+        mem = self.memStorage.pop(str(pathlib.PurePath(*path)), None)
         if mem is not None:
             mem.close()
 

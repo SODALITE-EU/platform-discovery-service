@@ -1,35 +1,22 @@
 import connexion
 import os
 import datetime
+import pds.api.utils.templates as templates
 
-from pds.api.openapi.models.discovery_input import DiscoveryInput  # noqa: E501
-from pds.api.openapi.models.discovery_output import DiscoveryOutput  # noqa: E501
-from pds.api.openapi.models.platform_type import PlatformType  # noqa: E501
+from pds.api.openapi.models.discovery_input import DiscoveryInput
+from pds.api.openapi.models.discovery_output import DiscoveryOutput
 
 from pds.api.log import get_logger
 from opera.commands.deploy import deploy as opera_deploy
-from opera.commands.undeploy import undeploy as opera_undeploy
 from opera.commands.outputs import outputs as opera_outputs
-from pds.api.safe_storage import SafeStorage
-from pds.api.memory_storage import SafeMemoryStorage
-from flask import current_app
+from pds.api.storages.safe_storage import SafeStorage
+from pds.api.utils.inputs import preprocess_inputs
+from pds.api.utils.environment import DeploymentEnvironment
 
 logger = get_logger(__name__)
 
-AUTH_BLUEPRINT = "auth"
 
-def status():  # noqa: E501
-    """Fetch the status of a deployment
-
-     # noqa: E501
-
-
-    :rtype: str
-    """
-    return 'do some magic!'
-
-
-def discover(body: DiscoveryInput = None):  # noqa: E501
+def discover(body: DiscoveryInput = None):
     """Automatic discovery and modeling of infrastructural resources.
 
      # noqa: E501
@@ -43,53 +30,53 @@ def discover(body: DiscoveryInput = None):  # noqa: E501
     logger.debug(body)
 
     if connexion.request.is_json:
-        discovery_input = DiscoveryInput.from_dict(connexion.request.get_json())  # noqa: E501
-    path, template = _get_service_template(discovery_input.platform_type)
-    auth_path, auth_template = _get_service_template(AUTH_BLUEPRINT)
-
-    mem_storage = SafeMemoryStorage.create(
-        current_app.config['STORAGE_KEY'].encode(),
-        auth_path + ".opera/"
-        )
-    safe_storage = SafeStorage.create(
-        current_app.config['STORAGE_KEY'].encode(),
-        path + ".opera/"
-        )
-
-    try:
-        #add key
-        os.chdir(auth_path)
-        opera_deploy(
-            auth_template, discovery_input.inputs, mem_storage,
-            verbose_mode=True, num_workers=1, delete_existing_state=True
+        discovery_input = DiscoveryInput.from_dict(
+            connexion.request.get_json()
             )
-    except Exception as ex:
-        logger.exception(ex)
-        return {"message": str(ex)}, 500
+    else:
+        return {"Incorrect input"}, 500
+
+    path, template = templates.get_service_template(
+        discovery_input.platform_type
+        )
+
+    environment = DeploymentEnvironment()
 
     try:
+        access_token = _get_access_token(connexion.request)
+        prerequisites = preprocess_inputs(discovery_input.inputs, access_token)
+        environment.setup(prerequisites[2], prerequisites[3])
+
+        safe_storage = SafeStorage.create(
+            prerequisites[1],
+            path + ".opera/"
+            )
         os.chdir(path)
         opera_deploy(
-            template, discovery_input.inputs, safe_storage,
+            template, prerequisites[0], safe_storage,
             verbose_mode=True, num_workers=1, delete_existing_state=True
             )
         result = opera_outputs(safe_storage)
     except Exception as ex:
-        logger.exception(ex)
+        logger.exception("An error occurred during discovery process")
         return {"message": str(ex)}, 500
     finally:
-        #remove key
-        os.chdir(auth_path)
-        opera_undeploy(
-            mem_storage, verbose_mode=True, num_workers=1
-            )
+        environment.cleanup()
 
     now = datetime.datetime.now(tz=datetime.timezone.utc)
     return DiscoveryOutput(now.isoformat(), result), 200
 
 
-def _get_service_template(blueprint_type: str):
-    if blueprint_type == PlatformType.SLURM:
-        return current_app.config['BLUEPRINT_PATH'] + "/slurm/", "wm_info.yaml"
-    if blueprint_type == AUTH_BLUEPRINT:
-        return current_app.config['BLUEPRINT_PATH'] + "/auth/", "ssh_key.yaml"
+def _get_access_token(request):
+    authorization = request.headers.get('Authorization')
+    if not authorization:
+        raise Exception(description='Authorization header absent')
+    try:
+        auth_type, token = authorization.split(None, 1)
+    except ValueError:
+        raise Exception(description='Invalid authorization header')
+
+    if auth_type.lower() != 'bearer':
+        raise Exception(description='Invalid authorization type')
+    return token
+

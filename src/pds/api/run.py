@@ -25,9 +25,10 @@ def main():
         'OIDC_OPENID_REALM': 'SODALITE',
         'OIDC_SCOPES': ['openid', 'email', 'profile'],
         'STORAGE_KEY': os.getenv('PDS_STORAGE_KEY', "InfxydkOHQ16o5K-qAG04oap593MPK20rpOA8mQh5ao="),
-        'BLUEPRINT_PATH': os.getenv('PDS_BLUEPRINT_PATH', "/root/projects/platform-discovery-service/bluerprints")
+        'BLUEPRINT_PATH': os.getenv('PDS_BLUEPRINT_PATH', "/root/projects/platform-discovery-service/bluerprints"),
+        'VAULT_LOGIN_URI': os.getenv('SECRET_VAULT_LOGIN_URI', "http://localhost:8200/v1/auth/jwt/login"),
+        'VAULT_SECRET_URI': os.getenv('SECRET_VAULT_URI', "http://localhost:8200/v1/"),
     })
-
     app.run(port=8081, debug=True)
 
 

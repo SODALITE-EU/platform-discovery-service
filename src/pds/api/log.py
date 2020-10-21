@@ -3,7 +3,7 @@ import os
 
 
 def _get_level_from_envvar(default=base_logging.INFO) -> int:
-    level_raw = os.getenv("LOG_LEVEL", None)
+    level_raw = os.getenv("LOG_LEVEL")
     if level_raw is None:
         return default
 
@@ -28,7 +28,9 @@ def get_logger(module_name: str) -> base_logging.Logger:
     console_handler = base_logging.StreamHandler()
     console_handler.setLevel(global_log_level)
 
-    formatter = base_logging.Formatter("%(asctime)s - %(levelname)s - %(name)s - %(message)s")
+    formatter = base_logging.Formatter(
+        "%(asctime)s - %(levelname)s - %(name)s - %(message)s"
+        )
 
     console_handler.setFormatter(formatter)
     result.addHandler(console_handler)
