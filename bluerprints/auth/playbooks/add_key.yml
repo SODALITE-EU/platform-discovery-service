@@ -1,23 +1,22 @@
 ---
   - hosts: localhost
     gather_facts: no
-    tasks:
+    tasks: 
       - name: Add ssh key to agent
         block:
-        - file:
-            state: absent
-            path: tmp_key
-        - shell: eval $(ssh-agent -s)    
+        - tempfile:
+            state:  file
+          register: tmp_key            
         - copy: 
             content: "{{ ssh_key }}"
-            dest: tmp_key
+            dest: "{{ tmp_key.path }}"
             mode: 0400
-          no_log: true
+          no_log: true        
         - expect:
-            command: ssh-add tmp_key
+            command: ssh-add "{{ tmp_key.path }}"
             responses:
-              (?i)Enter passphrase for tmp_key: "{{ ssh_key_password }}"
+              (?i)Enter passphrase for*: "{{ ssh_key_password }}"
           no_log: true  
         - file:
+            path: "{{ tmp_key.path }}"
             state: absent
-            path: tmp_key

@@ -36,17 +36,6 @@ topology_template:
       type: string
     ssh-key-password:
       type: string      
-      
-    frontend-address:
-      type: string
-    user:
-      type: string
-    key-location:
-      type: string
-    key-value:
-      type: string
-    namespace:
-      type: string 
   node_templates:
 
     localhost:
