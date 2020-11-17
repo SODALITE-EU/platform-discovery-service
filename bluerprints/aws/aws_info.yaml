@@ -1,0 +1,106 @@
+tosca_definitions_version: tosca_simple_yaml_1_3 
+
+node_types:
+  
+  sodalite.nodes.cloud.aws.info: 
+    derived_from: tosca.nodes.Root
+    properties:
+      region_name:
+        type: string 
+      aws_access_key:
+        type: string 
+      aws_secret_key:
+        type: string         
+      ami_filter:
+        type: string    
+    attributes:
+      region_info:
+        type: string    
+        default: ""       
+      vpc_info:
+        type: string    
+        default: ""     
+      vpc_subnet_info:
+        type: string  
+        default: ""         
+      ami_info:
+        type: string       
+        default: ""          
+    interfaces:
+        Standard:
+          type: tosca.interfaces.node.lifecycle.Standard
+          operations:
+            create:
+              inputs:
+                region_name:              { type: string, default: { get_property: [SELF, region_name] } }
+                aws_access_key:           { type: string, default: { get_property: [SELF, aws_access_key] } }
+                aws_secret_key:           { type: string, default: { get_property: [SELF, aws_secret_key] } }  
+                ami_filter:               { type: string, default: { get_property: [SELF, ami_filter] } }              
+              implementation: 
+                primary: playbooks/aws_get_region_info.yml
+
+
+  sodalite.nodes.cloud.aws.transform: 
+    derived_from: tosca.nodes.Root
+    properties:
+      namespace:
+        type: string 
+    attributes:
+      transformation_result:
+        type: string    
+    requirements:
+      - info:
+          node: sodalite.nodes.cloud.aws.info
+          capability: tosca.capabilities.Root
+          relationship: tosca.relationships.DependsOn   
+    interfaces:
+        Standard:
+          type: tosca.interfaces.node.lifecycle.Standard
+          operations:
+            create:
+              inputs:
+                namespace:                     { type: string, default: { get_property: [SELF, namespace] } }
+                region_name:                   { type: string, default: { get_property: [SELF, info, region_name] } }
+                region_info:                   { type: string, default: { get_attribute: [SELF, info, region_info] } }
+                vpc_info:                      { type: string, default: { get_attribute: [SELF, info, vpc_info] } }
+                vpc_subnet_info:               { type: string, default: { get_attribute: [SELF, info, vpc_subnet_info] } }
+                ami_info:                      { type: string, default: { get_attribute: [SELF, info, ami_info] } }
+              implementation: 
+                primary: playbooks/aws_transform_info.yml
+                dependencies: 
+                  - artifacts/aws.j2.yaml                
+
+topology_template:
+
+  inputs:
+    region:
+      type: string
+    aws_access_key:
+      type: string 
+    aws_secret_key:
+      type: string    
+    namespace:
+      type: string    
+
+  node_templates:
+
+    cloud-aws-info:
+      type: sodalite.nodes.cloud.aws.info   
+      properties: 
+        region_name: { get_input: region }    
+        aws_access_key: { get_input: aws_access_key }        
+        aws_secret_key: { get_input: aws_secret_key }  
+        ami_filter: "ubuntu-minimal*"
+ 
+
+    cloud-aws-transform:
+      type: sodalite.nodes.cloud.aws.transform
+      properties:
+        namespace: { get_input: namespace }
+      requirements:
+        - info: cloud-aws-info 
+                
+
+  outputs:
+    output-slurm-tosca:      
+      value: { get_attribute: [ cloud-aws-transform, transformation_result ] }        

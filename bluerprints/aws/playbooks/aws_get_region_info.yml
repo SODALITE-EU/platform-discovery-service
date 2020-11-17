@@ -1,0 +1,40 @@
+---
+  - hosts: localhost
+    gather_facts: no
+    tasks:
+      - name: Get Region Info
+        aws_region_info:
+          aws_access_key: "{{ aws_access_key }}"
+          aws_secret_key: "{{ aws_secret_key }}"
+          filters:
+            region-name: "{{ region_name }}"
+        register: region_info  
+      - name: Get VPC info   
+        ec2_vpc_net_info:  
+          region: "{{ region_name }}"
+          aws_access_key: "{{ aws_access_key }}"
+          aws_secret_key: "{{ aws_secret_key }}"
+        register: vpc_info 
+      - name: Get Subnets
+        ec2_vpc_subnet_info:
+          region: "{{ region_name }}"
+          aws_access_key: "{{ aws_access_key }}"
+          aws_secret_key: "{{ aws_secret_key }}"
+        register: vpc_subnet_info 
+      - name: Get AMIs
+        ec2_ami_info:
+          region: "{{ region_name }}"
+          aws_access_key: "{{ aws_access_key }}"
+          aws_secret_key: "{{ aws_secret_key }}"
+          filters:
+            name: "{{ ami_filter }}"
+            state: available
+        register: ami_info 
+      - name: Set attributes
+        set_stats:
+          data:
+            region_info: "{{ region_info }}"     
+            vpc_info: "{{ vpc_info }}"    
+            vpc_subnet_info: "{{ vpc_subnet_info }}"      
+            ami_info: "{{ ami_info }}"  
+          
