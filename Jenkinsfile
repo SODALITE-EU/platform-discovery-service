@@ -16,7 +16,7 @@ pipeline {
                         . venv-test/bin/activate                        
                         pip3 install -r requirements.txt
                         cat generate.sh
-                        . generate.sh
+                        ./generate.sh
                         cd src
                         touch *.xml
                         python3 -m pytest --pyargs -s tests --junitxml="results.xml" --cov=./pds/api  --cov-report xml tests/
