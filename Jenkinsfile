@@ -15,7 +15,6 @@ pipeline {
                         python3 -m venv venv-test
                         . venv-test/bin/activate                        
                         pip3 install -r requirements.txt
-                        cat generate.sh
                         ./generate.sh
                         cd src
                         touch *.xml
@@ -30,8 +29,7 @@ pipeline {
             }
             steps {
                 withSonarQubeEnv('SonarCloud') {
-                    sh  """ #!/bin/bash
-                            cd src/
+                    sh  """ #!/bin/bash                            
                             ${scannerHome}/bin/sonar-scanner
                         """
                 }
