@@ -1,6 +1,7 @@
 pipeline {
     agent { label 'docker-slave' }
        environment {
+           PDS_BLUEPRINT_PATH = "/testpath/testfolder"
        }
     stages {
         stage ('Pull repo code from github') {
