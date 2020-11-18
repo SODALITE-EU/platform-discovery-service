@@ -4,7 +4,7 @@ import os
 from pds.api.openapi import encoder
 
 
-def main():
+def get_app():
     app = connexion.App(__name__, specification_dir="./openapi/openapi/",
                         server="flask",
                         options=dict(
@@ -29,8 +29,8 @@ def main():
         'VAULT_LOGIN_URI': os.getenv('SECRET_VAULT_LOGIN_URI', "http://localhost:8200/v1/auth/jwt/login"),
         'VAULT_SECRET_URI': os.getenv('SECRET_VAULT_URI', "http://localhost:8200/v1/"),
     })
-    app.run(port=8081, debug=True)
+    return app
 
 
 if __name__ == "__main__":
-    main()
+    get_app().run(port=8081, debug=True)

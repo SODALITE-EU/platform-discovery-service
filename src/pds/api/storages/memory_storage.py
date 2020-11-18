@@ -45,4 +45,3 @@ class SafeMemoryStorage(Storage):
     def remove_all(self):
         for path in self.memStorage.keys:
             self.remove(*path)
-
