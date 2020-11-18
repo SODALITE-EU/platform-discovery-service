@@ -1,9 +1,12 @@
+wheel
+boto
+boto3
 ansible
 opera
 connexion[swagger-ui]
 python-dateutil >= 2.8.1
 pexpect
-
+pytest
+pytest-cov
 twine
-wheel
 setuptools
