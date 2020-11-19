@@ -1,6 +1,7 @@
 pipeline {
     agent { label 'docker-slave' }
        environment {
+           PDS_BLUEPRINT_PATH = "/testpath/testfolder"
        }
     stages {
         stage ('Pull repo code from github') {
@@ -14,6 +15,7 @@ pipeline {
                         python3 -m venv venv-test
                         . venv-test/bin/activate                        
                         pip3 install -r requirements.txt
+                        ./generate.sh
                         cd src
                         touch *.xml
                         python3 -m pytest --pyargs -s tests --junitxml="results.xml" --cov=./pds/api  --cov-report xml tests/
@@ -27,8 +29,7 @@ pipeline {
             }
             steps {
                 withSonarQubeEnv('SonarCloud') {
-                    sh  """ #!/bin/bash
-                            cd src/
+                    sh  """ #!/bin/bash                            
                             ${scannerHome}/bin/sonar-scanner
                         """
                 }
