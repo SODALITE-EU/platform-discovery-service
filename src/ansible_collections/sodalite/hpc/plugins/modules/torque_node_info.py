@@ -1,6 +1,5 @@
 #!/usr/bin/python
 
-# Copyright: (c) 2018, Terry Jones <terry.jones@example.org>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
@@ -13,7 +12,7 @@ ANSIBLE_METADATA = {
 
 DOCUMENTATION = '''
 ---
-module: slurm_partition_info
+module: torque_node_info
 '''
 
 EXAMPLES = '''
@@ -21,21 +20,21 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-slurm_partition_info:
+torque_node_info:
 
 '''
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_text
-from ansible_collections.sodalite.discovery.plugins.module_utils import (
-    slurm_utils
+from ansible_collections.sodalite.hpc.plugins.module_utils import (
+    torque_utils
 )
 
 
-def slurm_partition_info_argument_spec():
+def torque_node_info_argument_spec():
 
     module_args = dict(
-        partition=dict(type='str', required=False)
+        node=dict(type='str', required=False)
     )
 
     return module_args
@@ -43,24 +42,24 @@ def slurm_partition_info_argument_spec():
 
 def run_module():
 
-    module = AnsibleModule(slurm_partition_info_argument_spec())
-    partition_name = module.params['partition']
+    module = AnsibleModule(torque_node_info_argument_spec())
+    node_name = module.params['node']
 
     try:
-        command = 'scontrol show partition {}'.format(partition_name) if partition_name is not None else 'scontrol show partition'
+        command = 'pbsnodes {}'.format(node_name) if node_name is not None else 'pbsnodes'
         stdin, stdout, stderr = module.run_command(command)
     except Exception as err:
         module.fail_json(
-                msg='Failed to execute scontrol command',
+                msg='Failed to execute pbsnodes command',
                 details=to_text(err),
         )
 
     result = {}
     try:
-        result["slurm_partition"] = slurm_utils.parse_output(stdout, "PartitionName")
+        result["torque_node"] = torque_utils.parse_node_output(stdout)
     except Exception as err:
         module.fail_json(
-                msg='Failed to parse scontrol output',
+                msg='Failed to parse pbsnodes output',
                 details=to_text(err),
         )
 
