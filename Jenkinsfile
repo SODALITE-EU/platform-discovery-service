@@ -29,7 +29,8 @@ pipeline {
             }
             steps {
                 withSonarQubeEnv('SonarCloud') {
-                    sh  """ #!/bin/bash                            
+                    sh  """ #!/bin/bash        
+                            cd src                    
                             ${scannerHome}/bin/sonar-scanner
                         """
                 }
