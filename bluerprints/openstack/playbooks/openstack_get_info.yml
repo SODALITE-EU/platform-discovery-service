@@ -1,0 +1,28 @@
+- hosts: localhost
+  gather_facts: no
+  environment:
+    "{{ os_env }}"
+  tasks:
+  - name: Retrieve all available Openstack images
+    openstack.cloud.os_image_info:
+    register: os_images
+  - name: Retrieve all available Openstack flavors
+    openstack.cloud.os_flavor_info:
+    register: os_flavors
+  - name: Retrieve all available Openstack networks
+    openstack.cloud.os_networks_info:
+    register: os_networks 
+  - name: Retrieve all available Openstack security groups
+    sodalite.discovery.os_security_group_info:
+    register: os_security_groups    
+  - name: Retrieve keys available for current Openstack account
+    sodalite.discovery.os_key_pair_info:
+    register: os_key_pairs       
+  - name: Set attributes
+    set_stats:
+      data:
+        os_image_info: "{{ os_images }}"     
+        os_flavor_info: "{{ os_flavors }}"    
+        os_security_groups: "{{ os_security_groups }}"      
+        os_networks: "{{ os_networks }}"   
+        os_key_pairs: "{{ os_key_pairs }}"  

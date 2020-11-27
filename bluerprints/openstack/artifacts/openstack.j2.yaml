@@ -1,0 +1,143 @@
+tosca_definitions_version: tosca_simple_yaml_1_3 
+
+data_types: 
+  sodalite.datatypes.OpenStack.{{ namespace }}.SecurityRule:  
+    derived_from: tosca.datatypes.Root 
+    properties:  
+      protocol:  
+        required: True 
+        type: string 
+        default: tcp 
+        constraints:  
+          - valid_values: ['tcp', 'udp', 'icmp'] 
+      port_range_min:  
+        required: True 
+        type: tosca.datatypes.network.PortDef 
+      port_range_max:  
+        type: tosca.datatypes.network.PortDef 
+        required: True 
+      remote_ip_prefix:  
+        default: 0.0.0.0/0 
+        required: True 
+        type: string 
+
+node_types:
+
+  sodalite.nodes.OpenStack.{{ namespace }}.SecurityRules:  
+    derived_from: tosca.nodes.Root 
+    properties:  
+      group_name:  
+        description: Name of the security group in openstack. 
+        required: True 
+        type: string 
+      ports:  
+        required: False 
+        constraints:  
+          - min_length: 1 
+        type: map 
+        entry_schema:  
+          type: sodalite.datatypes.OpenStack.SecurityRule 
+      group_description:  
+        description: Description of the security group in openstack. 
+        required: True 
+        type: string 
+
+  sodalite.nodes.OpenStack.{{ namespace }}.Flavor:
+    derived_from: tosca.nodes.Root
+    properties:
+      id:
+        type: string
+        required: true
+        default: ""
+      flavor_name:
+        type: string
+        required: true
+        default: ""
+      is_public:
+        type: boolean
+        required: true
+        default: ""
+      ram:
+        type: integer
+        required: true
+        default: 0
+      vcpus:
+        type: integer
+        required: true
+        default: 0 
+      disk:
+        type: integer
+        required: true
+        default: 0
+
+   sodalite.nodes.OpenStack.{{ namespace }}.Image:
+    derived_from: tosca.nodes.Root
+    properties:
+      image:
+        type: string
+        description: OpenStack image name
+        default: ""
+
+  sodalite.nodes.OpenStack.{{ namespace }}.Network:
+    derived_from: tosca.nodes.Root
+    properties:
+      name:
+        type: string
+        description: OpenStack Network name
+      mtu:
+        type: integer
+        description: Maximum transmission unit
+    capabilities:  
+      network:  
+        type: tosca.capabilities.Network 
+
+  sodalite.nodes.OpenStack.{{ namespace }}.KeyPair:
+    derived_from: tosca.nodes.Root
+    properties:
+      name:
+        type: string
+        description: OpenStack Key Pair name
+
+topology_template:
+
+  node_templates:
+
+{% for security_group in os_security_groups.openstack_security_group %}
+{% if security_group.name != "default" %}
+    security-rules-{{ security_group.name }}:  
+      type: sodalite.nodes.OpenStack.SecurityRules 
+      properties:
+        ports:
+{% for security_group_rule in security_group.security_group_rules %}
+{% if security_group_rule.direction == "ingress" %}
+         ports-{{ security_group_rule.protocol }}-{{ security_group_rule.port_range_min }}-{{ security_group_rule.port_range_max }}:  
+            port_range_max: {{ security_group_rule.port_range_max }} 
+            remote_ip_prefix: {{ security_group_rule.remote_ip_prefix }}
+            port_range_min: {{ security_group_rule.port_range_min }} 
+            protocol: {{ security_group_rule.protocol }}
+{% endif %}
+{% endfor %}
+        group_name: {{ security_group.name }}
+{% if security_group.description|length %}
+        group_description: {{ security_group.description }}
+{% else %}
+        group_description: ""
+{% endif %}
+
+{% endif %}
+{% endfor %}
+{% for network in os_networks.openstack_networks %}
+    network-{{ network.name | replace(" ","_") }}: 
+      type: sodalite.nodes.OpenStack.Network
+      properties:
+        name: {{ network.name }}
+        mtu: {{ network.mtu }}
+
+{% endfor %}
+{% for key_pair in os_key_pairs.openstack_key_pair %}
+    key-pair-{{ key_pair.name | replace(" ","_") }}: 
+      type: sodalite.nodes.OpenStack.KeyPair
+      properties:
+        name: {{ key_pair.name }}
+
+{% endfor %}  

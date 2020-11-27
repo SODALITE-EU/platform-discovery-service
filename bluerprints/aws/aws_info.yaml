@@ -102,5 +102,5 @@ topology_template:
                 
 
   outputs:
-    output-slurm-tosca:      
+    output-aws-tosca:      
       value: { get_attribute: [ cloud-aws-transform, transformation_result ] }        

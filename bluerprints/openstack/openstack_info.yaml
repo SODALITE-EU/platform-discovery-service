@@ -1,0 +1,93 @@
+tosca_definitions_version: tosca_simple_yaml_1_3 
+
+node_types:
+  
+  sodalite.nodes.cloud.openstack.info: 
+    derived_from: tosca.nodes.Root
+    properties:
+      os_env:
+        type: map 
+    attributes: 
+      os_image_info:
+        type: string    
+        default: ""       
+      os_flavor_info:
+        type: string    
+        default: ""     
+      os_networks:
+        type: string  
+        default: ""         
+      os_security_groups:
+        type: string       
+        default: ""     
+      os_key_pairs:
+        type: string       
+        default: ""      
+    interfaces:
+        Standard:
+          type: tosca.interfaces.node.lifecycle.Standard
+          operations:
+            create:
+              inputs:
+                os_env:              { type: string, default: { get_property: [SELF, os_env] } }
+              implementation: 
+                primary: playbooks/openstack_get_info.yml
+
+
+  sodalite.nodes.cloud.openstack.transform: 
+    derived_from: tosca.nodes.Root
+    properties:
+      namespace:
+        type: string 
+    attributes:
+      transformation_result:
+        type: string    
+    requirements:
+      - info:
+          node: sodalite.nodes.cloud.openstack.info
+          capability: tosca.capabilities.Root
+          relationship: tosca.relationships.DependsOn   
+    interfaces:
+        Standard:
+          type: tosca.interfaces.node.lifecycle.Standard
+          operations:
+            create:
+              inputs:
+                namespace:                     { type: string, default: { get_property: [SELF, namespace] } }
+                os_image_info:                 { type: string, default: { get_attribute: [SELF, info, os_image_info] } }
+                os_flavor_info:                { type: string, default: { get_attribute: [SELF, info, os_flavor_info] } }
+                os_networks:                   { type: string, default: { get_attribute: [SELF, info, os_networks] } }
+                os_security_groups:            { type: string, default: { get_attribute: [SELF, info, os_security_groups] } }
+                os_key_pairs:                  { type: string, default: { get_attribute: [SELF, info, os_key_pairs] } }
+              implementation: 
+                primary: playbooks/openstack_transform_info.yml
+                dependencies: 
+                  - artifacts/openstack.j2.yaml                
+
+topology_template:
+
+  inputs:
+    namespace:
+      type: string  
+    os_env:
+      type: map
+
+  node_templates:
+
+    cloud-openstack-info:
+      type: sodalite.nodes.cloud.openstack.info   
+      properties: 
+        os_env: { get_input: os_env }    
+ 
+
+    cloud-openstack-transform:
+      type: sodalite.nodes.cloud.openstack.transform
+      properties:
+        namespace: { get_input: namespace }
+      requirements:
+        - info: cloud-openstack-info 
+                
+
+  outputs:
+    output-slurm-tosca:      
+      value: { get_attribute: [ cloud-openstack-transform, transformation_result ] }        

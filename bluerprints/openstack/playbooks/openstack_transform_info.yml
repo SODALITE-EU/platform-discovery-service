@@ -1,0 +1,10 @@
+- hosts: localhost
+  gather_facts: no
+  tasks:   
+    - name: Convert to TOSCA
+      set_fact:
+        rendered_template: "{{ lookup('template', './openstack.j2.yaml') }}"
+    - name: Set attribute
+      set_stats:
+        data:
+          transformation_result: "{{ rendered_template }}"   

@@ -21,16 +21,16 @@
   - hosts: wm
     gather_facts: no
     tasks:
-      - name: Get slurm node info
-        sodalite.hpc.slurm_node_info:
+      - name: Get torque node info
+        sodalite.hpc.torque_node_info:
         register: node_info
 
-      - name: Get slurm partition info
-        sodalite.hpc.slurm_partition_info:
-        register: partition_info
+      - name: Get torque queue info
+        sodalite.hpc.torque_queue_info:
+        register: queue_info
 
       - name: Set attribute
         set_stats:
           data:
             node_info: "{{ node_info }}"      
-            partition_info: "{{ partition_info }}"    
+            queue_info: "{{ queue_info }}"    

@@ -1,0 +1,148 @@
+tosca_definitions_version: tosca_simple_yaml_1_3 
+
+capability_types:
+
+  sodalite.capabilities.{{ namespace }}.Queue:
+    derived_from: tosca.capabilities.Compute
+
+  sodalite.capabilities.{{ namespace }}.WM:
+    derived_from: tosca.capabilities.Compute
+
+  sodalite.capabilities.{{ namespace }}.JobResources:
+    derived_from: tosca.capabilities.Compute
+    properties:
+      gpus:
+        type: integer
+        required: true
+      cpus:
+        type: integer
+        required: true
+      memory:
+        type: integer
+        required: false
+
+node_types:
+
+  sodalite.nodes.hpc.{{ namespace }}.TorqueNode:
+    derived_from: tosca.nodes.Compute
+    properties:
+      name:
+        type: string
+        required: true
+    capabilities:      
+      resources:
+        type: sodalite.capabilities.{{ namespace }}.JobResources        
+      os:
+        type: tosca.capabilities.OperatingSystem     
+    requirements:
+      - wm:                   
+          node: sodalite.nodes.hpc.{{ namespace }}.TorqueWM
+          capability: sodalite.capabilities.{{ namespace }}.WM
+          relationship: tosca.relationships.AttachesTo
+      - queue:                   
+          node: sodalite.nodes.hpc.{{ namespace }}.TorqueQueue
+          capability: sodalite.capabilities.{{ namespace }}.Queue
+          relationship: tosca.relationships.AttachesTo            
+
+  sodalite.nodes.hpc.{{ namespace }}.TorqueQueue:
+    derived_from: tosca.nodes.Compute
+    properties:
+      name:
+        type: string
+        required: true
+    capabilities:      
+      resources:
+        type: sodalite.capabilities.{{ namespace }}.JobResources
+    requirements:
+      - wm:                   
+          node: sodalite.nodes.hpc.{{ namespace }}.TorqueWM
+          capability: sodalite.capabilities.{{ namespace }}.WM
+          relationship: tosca.relationships.AttachesTo
+
+  sodalite.nodes.hpc.{{ namespace }}.TorqueWM: 
+    description: >
+      Torque wm, here we can define properties/attributes applicable for Torque WM
+    derived_from: tosca.nodes.Compute
+    attributes:
+      username:
+        type: string
+      ssh-key:
+        type: string
+    capabilities:
+      host:
+        type: tosca.capabilities.Compute
+      resources:
+        type: sodalite.capabilities.{{ namespace }}.JobResources  
+
+topology_template:
+
+  inputs:
+    user:
+      type: string
+    key-location:
+      type: string
+
+  node_templates:
+
+{% set total_gpus = [0] -%}
+{% set total_cpus = [0] -%}
+{% set total_memory = [0] -%}
+{% for node in node_info.torque_node %}
+    node-hpc-{{ namespace }}-{{ node.node_name | replace(" ","-") }}:
+      type: sodalite.nodes.hpc.{{ namespace }}.TorqueNode
+      properties:
+        name: {{ node.node_name }}
+      capabilities:    
+        resources:
+          gpus: {{ node.gpus }} 
+          cpus: {{ node.status.ncpus }}
+          memory: {{ node.status.totmem }}
+        os:
+          type: {{ node.status.opsys }} 
+      requirements:
+        - wm: hpc-wm-torque-{{ namespace }}-wm
+{% for queue in node.properties %}
+        - queue: queue-hpc-{{ namespace }}-{{ queue | replace(" ","-") }}
+{% endfor %}
+             
+{% if total_gpus.append(total_gpus.pop() + node.gpus|int) -%}{% endif %}
+{% if total_cpus.append(total_cpus.pop() + node.status.ncpus|int) -%}{% endif %}
+{% if total_memory.append(total_memory.pop() + node.status.totmem|int) -%}{% endif %}
+
+{% endfor %}
+{% for queue in queue_info.torque_queue %}
+{% set queue_gpus = [0] -%}
+{% set queue_cpus = [0] -%}
+{% set queue_memory = [0] -%}
+{% for node in node_info.torque_node %}
+{% if (queue.queue_name in node.properties) -%}
+{% if queue_gpus.append(queue_gpus.pop() + node.gpus|int) -%}{% endif %}
+{% if queue_cpus.append(queue_cpus.pop() + node.status.ncpus|int) -%}{% endif %}
+{% if queue_memory.append(queue_memory.pop() + node.status.totmem|int) -%}{% endif %}
+{% endif %}
+{% endfor %}
+    queue-hpc-{{ namespace }}-{{ queue.queue_name | replace(" ","-") }}:
+      type: sodalite.nodes.hpc.{{ namespace }}.TorqueQueue
+      properties:
+        name: {{ queue.queue_name }}
+      capabilities:    
+        resources:
+          gpus: {{ queue_gpus[0] }} 
+          cpus: {{ queue_cpus[0] }}
+          memory: {{ queue_memory[0] }}           
+      requirements:
+        - wm: hpc-wm-torque-{{ namespace }}-wm  
+
+{% endfor %}
+
+    hpc-wm-torque-{{ namespace }}-wm:
+      type: sodalite.nodes.hpc.{{ namespace }}.TorqueWM
+      attributes:
+        public_address: {{ frontend_address }}
+        username: { get_input: user }
+        ssh-key: { get_input: key-location }
+      capabilities:    
+        resources:
+          gpus: {{ total_gpus[0] }} 
+          cpus: {{ total_cpus[0] }}
+          memory: {{ total_memory[0] }}
