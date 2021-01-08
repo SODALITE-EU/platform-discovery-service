@@ -1,8 +1,10 @@
-from ansible_collections.sodalite.hpc.plugins.module_utils import torque_utils
+from ansible_collections.sodalite.hpc.plugins.module_utils import (
+    torque_utils)
 import pytest
 
 
-class TestHPCUtils:
+class TestTorqueHPCUtils:
+
     @pytest.fixture
     def torque_node_stdout(self):
         stdout = """
@@ -98,6 +100,20 @@ class TestHPCUtils:
     def torque_node_properties(self):
         stdout = """
         batch,cpu,gpu
+        """
+        return stdout   
+
+    @pytest.fixture
+    def slurm_node_gres1(self):
+        stdout = """
+        Gres=gpu:tesla:2,gpu:kepler:2,mps:400,bandwidth:lustre:no_consume:4G
+        """
+        return stdout     
+
+    @pytest.fixture
+    def slurm_node_gres2(self):
+        stdout = """
+        Gres=gpu:4(S:0-1)
         """
         return stdout   
 
