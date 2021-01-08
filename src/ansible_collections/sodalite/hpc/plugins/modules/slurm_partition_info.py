@@ -26,7 +26,7 @@ slurm_partition_info:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_text
-from ansible_collections.sodalite.discovery.plugins.module_utils import (
+from ansible_collections.sodalite.hpc.plugins.module_utils import (
     slurm_utils
 )
 

@@ -26,7 +26,9 @@ slurm_node_info:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_text
-from ansible_collections.sodalite.discovery.plugins.module_utils import slurm_utils
+from ansible_collections.sodalite.hpc.plugins.module_utils import (
+    slurm_utils
+)
 
 
 def slurm_node_info_argument_spec():
@@ -60,10 +62,6 @@ def run_module():
                 msg='Failed to parse scontrol output',
                 details=to_text(err),
         )
-
-    for node in result["slurm_node"]:
-        if node["Gres"] == "(null)":
-            node["GPU"] = 0
 
     module.exit_json(changed=False, **result)
 
