@@ -94,7 +94,7 @@ topology_template:
         name: {{ node.NodeName }}
       capabilities:    
         resources:
-          gpus: {{ node.GPU }} 
+          gpus: {{ node.Gres.total_gpu }} 
           cpus: {{ node.CPUTot }}
           memory: {{ node.RealMemory }}
 {% if "OS" in node %}
@@ -105,7 +105,7 @@ topology_template:
         - wm: hpc-wm-slurm-{{ namespace }}-wm
         - queue: queue-hpc-{{ namespace }}-{{ node.Partitions | replace(" ","-") }}
              
-{% if total_gpus.append(total_gpus.pop() + node.GPU|int) -%}{% endif %}
+{% if total_gpus.append(total_gpus.pop() + node.Gres.total_gpu|int) -%}{% endif %}
 {% if total_cpus.append(total_cpus.pop() + node.CPUTot|int) -%}{% endif %}
 {% if total_memory.append(total_memory.pop() + node.RealMemory|int) -%}{% endif %}
 
@@ -116,7 +116,7 @@ topology_template:
 {% set part_memory = [0] -%}
 {% for node in node_info.slurm_node %}
 {% if node.Partitions == partition.PartitionName -%}
-{% if part_gpus.append(part_gpus.pop() + node.GPU|int) -%}{% endif %}
+{% if part_gpus.append(part_gpus.pop() + node.Gres.total_gpu|int) -%}{% endif %}
 {% if part_cpus.append(part_cpus.pop() + node.CPUTot|int) -%}{% endif %}
 {% if part_memory.append(part_memory.pop() + node.RealMemory|int) -%}{% endif %}
 {% endif %}
