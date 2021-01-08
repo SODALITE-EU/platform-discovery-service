@@ -18,7 +18,7 @@ pipeline {
                         ./generate.sh
                         cd src
                         touch *.xml
-                        python3 -m pytest --pyargs -s tests --junitxml="results.xml" --cov=./pds/api  --cov-report xml tests/
+                        python3 -m pytest --pyargs -s tests --junitxml="results.xml" --cov=./pds/api --cov=./ansible_collections/sodalite --cov-report xml tests/
                     """
                 junit 'src/results.xml'
             }
