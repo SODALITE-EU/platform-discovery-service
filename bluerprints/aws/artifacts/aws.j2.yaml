@@ -132,15 +132,15 @@ topology_template:
 
   {% endfor %}
   #AMI
-  {% for image in ami_info.images %}
+{% for image in ami_info.images %}
     sodalite-node-hpc-{{ namespace }}-{{ image.image_id }}:
       type: sodalite.nodes.AWS.{{ namespace }}.AmazonMachineImage 
-      {% if image.description is defined %}
+{% if image.description is defined %}
       description:  {{ image.platform_details }} \
                     {{ image.description }}
-      {% else %}
+{% else %}
       description:  {{ image.platform_details }} 
-      {% endif %}
+{% endif %}
       properties:
         image_id: {{ image.image_id }}
         name: {{ image.name }}
@@ -148,5 +148,5 @@ topology_template:
       requirements:
         - region: sodalite-node-aws-region-{{ namespace }}-{{ region_name }}
 
-  {% endfor %}
+{% endfor %}
 
