@@ -7,7 +7,7 @@ from pds.api.openapi.models.discovery_input import DiscoveryInput
 from pds.api.openapi.models.discovery_output import DiscoveryOutput
 
 from pds.api.log import get_logger
-from opera.commands.deploy import deploy as opera_deploy
+from opera.commands.deploy import deploy_service_template as opera_deploy
 from opera.commands.outputs import outputs as opera_outputs
 from pds.api.storages.safe_storage import SafeStorage
 from pds.api.utils.inputs import preprocess_inputs

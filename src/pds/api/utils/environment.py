@@ -2,7 +2,7 @@ import os
 
 import pds.api.utils.templates as templates
 from pds.api.storages.memory_storage import SafeMemoryStorage
-from opera.commands.deploy import deploy as opera_deploy
+from opera.commands.deploy import deploy_service_template as opera_deploy
 from opera.commands.undeploy import undeploy as opera_undeploy
 
 
