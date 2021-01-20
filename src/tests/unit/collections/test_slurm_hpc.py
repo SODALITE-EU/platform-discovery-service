@@ -1,5 +1,8 @@
 from ansible_collections.sodalite.hpc.plugins.module_utils import (
     slurm_utils)
+from ansible_collections.sodalite.hpc.plugins.modules import (
+    slurm_node_info, slurm_partition_info)
+from ansible.module_utils.basic import AnsibleModule
 import pytest
 
 
@@ -68,3 +71,18 @@ class TestTorqueHPCUtils:
         assert gres["total_gpu"] == 4
         gres = slurm_utils.parse_gres(slurm_node_gres2)
         assert gres["total_gpu"] == 4
+
+    def test_slurm_node_info(self, mocker, slurm_node):
+        module = mocker.patch.object(AnsibleModule,
+                                     'run_command', return_value=True)
+        module.return_value = slurm_node, None, None
+        result = slurm_node_info.execute_command(module)
+        assert result == {}
+
+    def test_slurm_partition_info(self, mocker, slurm_node):
+        module = mocker.patch.object(AnsibleModule,
+                                     'run_command', return_value=True)
+        module.return_value = "", None, None
+        result = slurm_partition_info.execute_command(module)
+        assert result == {}
+

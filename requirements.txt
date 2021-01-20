@@ -8,5 +8,6 @@ python-dateutil >= 2.8.1
 pexpect
 pytest
 pytest-cov
+pytest-mock
 twine
 setuptools

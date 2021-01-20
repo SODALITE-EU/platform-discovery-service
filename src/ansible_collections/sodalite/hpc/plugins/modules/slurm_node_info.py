@@ -43,8 +43,14 @@ def slurm_node_info_argument_spec():
 def run_module():
 
     module = AnsibleModule(slurm_node_info_argument_spec())
-    node_name = module.params['node']
 
+    result = execute_command(module)
+
+    module.exit_json(changed=False, **result)
+
+
+def execute_command(module):
+    node_name = module.params['node']
     try:
         command = 'scontrol show node {}'.format(node_name) if node_name is not None else 'scontrol show nodes'
         stdin, stdout, stderr = module.run_command(command)
@@ -63,7 +69,7 @@ def run_module():
                 details=to_text(err),
         )
 
-    module.exit_json(changed=False, **result)
+    return result
 
 
 def main():

@@ -1,5 +1,8 @@
 from ansible_collections.sodalite.hpc.plugins.module_utils import (
     torque_utils)
+from ansible_collections.sodalite.hpc.plugins.modules import (
+    torque_node_info, torque_queue_info)
+from ansible.module_utils.basic import AnsibleModule
 import pytest
 
 
@@ -149,3 +152,17 @@ class TestTorqueHPCUtils:
         properties = torque_utils.parse_node_properties(torque_node_properties)
         assert len(properties) == 3
         assert properties[1] == "cpu"
+
+    def test_torque_node_info(self, mocker, torque_node_stdout):
+        module = mocker.patch.object(AnsibleModule,
+                                     'run_command', return_value=True)
+        module.return_value = torque_node_stdout, None, None
+        result = torque_node_info.execute_command(module)
+        assert result == {}
+
+    def test_torque_queue_info(self, mocker, torque_queue_stdout):
+        module = mocker.patch.object(AnsibleModule,
+                                     'run_command', return_value=True)
+        module.return_value = torque_queue_stdout, None, None
+        result = torque_queue_info.execute_command(module)
+        assert result == {}

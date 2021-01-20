@@ -43,6 +43,13 @@ def torque_queue_info_argument_spec():
 def run_module():
 
     module = AnsibleModule(torque_queue_info_argument_spec())
+
+    result = execute_command(module)
+
+    module.exit_json(changed=False, **result)
+
+
+def execute_command(module):
     queue_name = module.params['queue']
 
     try:
@@ -63,7 +70,7 @@ def run_module():
                 details=to_text(err),
         )
 
-    module.exit_json(changed=False, **result)
+    return result
 
 
 def main():
