@@ -1,5 +1,4 @@
 import requests
-import jwt
 from flask import current_app
 from base64 import b64encode
 
