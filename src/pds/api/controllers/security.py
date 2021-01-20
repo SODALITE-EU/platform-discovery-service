@@ -1,4 +1,5 @@
 import requests
+import jwt
 from flask import current_app
 from base64 import b64encode
 
@@ -13,6 +14,11 @@ def token_info(access_token) -> dict:
     request = {'token': access_token}
     headers = {'Content-type': 'application/x-www-form-urlencoded'}
     token_info_url = current_app.config['OIDC_INTROSPECTION_ENDPOINT']
+    # currently we are using access tokens only for secret retrieval
+    # so if no introspection endpoint is configured we can proceed
+    # as it is currently not a security risk
+    if token_info_url == "":
+        return {'scope': ['uid']}
     basic_auth_string = '{0}:{1}'.format(
         current_app.config['OIDC_CLIENT_ID'],
         current_app.config['OIDC_CLIENT_SECRET']
