@@ -19,15 +19,21 @@ def get_app():
         pythonic_params=True
         )
     app.app.config.update({
-        'OIDC_INTROSPECTION_ENDPOINT': 'http://localhost:8080/auth/realms/SODALITE/protocol/openid-connect/token/introspect',
-        'OIDC_CLIENT_ID': 'sodalite-ide',
-        'OIDC_CLIENT_SECRET': 'a8337e6d-ffbf-45ac-9fef-a8d3bd5c45cb',
-        'OIDC_OPENID_REALM': 'SODALITE',
-        'OIDC_SCOPES': ['openid', 'email', 'profile'],
-        'STORAGE_KEY': os.getenv('PDS_STORAGE_KEY', "InfxydkOHQ16o5K-qAG04oap593MPK20rpOA8mQh5ao="),
-        'BLUEPRINT_PATH': os.getenv('PDS_BLUEPRINT_PATH', "/root/projects/platform-discovery-service/bluerprints"),
-        'VAULT_LOGIN_URI': os.getenv('SECRET_VAULT_LOGIN_URI', "http://localhost:8200/v1/auth/jwt/login"),
-        'VAULT_SECRET_URI': os.getenv('SECRET_VAULT_URI', "http://localhost:8200/v1/"),
+        "OIDC_INTROSPECTION_ENDPOINT": os.getenv("OIDC_INTROSPECTION_ENDPOINT", ""),
+        "OIDC_CLIENT_ID": os.getenv("OIDC_CLIENT_ID",
+                                    "sodalite-ide"),
+        "OIDC_CLIENT_SECRET": os.getenv("OIDC_CLIENT_SECRET",
+                                        "a8337e6d-ffbf-45ac-9fef-a8d3bd5c45cb"),
+        "OIDC_OPENID_REALM": "SODALITE",
+        "OIDC_SCOPES": ["openid", "email", "profile"],
+        "STORAGE_KEY": os.getenv("PDS_STORAGE_KEY",
+                                 "InfxydkOHQ16o5K-qAG04oap593MPK20rpOA8mQh5ao="),
+        "BLUEPRINT_PATH": os.getenv("PDS_BLUEPRINT_PATH",
+                                    "/root/projects/platform-discovery-service/blueprints"),
+        "VAULT_LOGIN_URI": os.getenv("SECRET_VAULT_LOGIN_URI",
+                                     "http://localhost:8200/v1/auth/jwt/login"),
+        "VAULT_SECRET_URI": os.getenv("SECRET_VAULT_URI",
+                                      "http://localhost:8200/v1/"),
     })
     return app
 

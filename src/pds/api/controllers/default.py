@@ -68,15 +68,14 @@ def discover(body: DiscoveryInput = None):
 
 
 def _get_access_token(request):
-    authorization = request.headers.get('Authorization')
+    authorization = request.headers.get("Authorization")
     if not authorization:
-        raise Exception(description='Authorization header absent')
+        raise Exception(description="Authorization header absent")
     try:
         auth_type, token = authorization.split(None, 1)
     except ValueError:
-        raise Exception(description='Invalid authorization header')
+        raise Exception(description="Invalid authorization header")
 
-    if auth_type.lower() != 'bearer':
-        raise Exception(description='Invalid authorization type')
+    if auth_type.lower() != "bearer":
+        raise Exception(description="Invalid authorization type")
     return token
-

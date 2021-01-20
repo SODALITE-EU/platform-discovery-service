@@ -12,8 +12,6 @@ SECRET_PREFIX = "_get_secret"
 SSH_KEY_PREFIX = "_ssh_key"
 SSH_KEY_PASSWORD_PREFIX = "_ssh_password"
 STORAGE_KEY_PREFIX = "_storage_key"
-ENV_PREFIX = "_env"
-
 
 def preprocess_inputs(inputs, access_token):
     refined_inputs = inputs.copy()
@@ -49,8 +47,6 @@ def preprocess_inputs(inputs, access_token):
             if(password_key in refined_inputs):
                 password = refined_inputs.pop(password_key)
             ssh_keys.append((ssh_key, password))
-        elif key.startswith(ENV_PREFIX):
-            env_vars.append(refined_inputs.pop(key))
 
     if STORAGE_KEY_PREFIX in refined_inputs:
         storage_key = refined_inputs.pop(STORAGE_KEY_PREFIX).encode()
@@ -61,6 +57,10 @@ def preprocess_inputs(inputs, access_token):
 
 
 def _get_secret(secret_path, vault_role, access_token) -> dict:
+    if access_token is None:
+        raise Exception(
+            "Vault secret retrieval error. Access token is not provided."
+            )
     request = {'jwt': access_token, 'role': vault_role}
     secret_vault_login_uri = current_app.config['VAULT_LOGIN_URI']
     token_request = session.post(secret_vault_login_uri, data=request)
