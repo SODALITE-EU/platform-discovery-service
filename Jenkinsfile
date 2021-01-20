@@ -35,6 +35,22 @@ pipeline {
                         """
                 }
             }
+        }
+        stage('Build Platform Discovery Service Docker Image') {
+            steps {
+                sh """#!/bin/bash
+                    ./make_docker.sh build platform-discovery-service
+                    """
+            }
+        }
+        stage('Push Platform Discovery Service to DockerHub') {
+            steps {
+                withDockerRegistry(credentialsId: 'jenkins-sodalite.docker_token', url: '') {
+                    sh  """#!/bin/bash
+                            ./make_docker.sh push platform-discovery-service production
+                        """
+                }
+            }
         }        
 
     }

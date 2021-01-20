@@ -17,10 +17,18 @@ RUN export CRYPTOGRAPHY_PREREQS="gcc musl-dev libffi-dev openssl-dev python3-dev
     && rm requirements.txt
 
 COPY --from=builder /build/src/ /app/
-COPY /ansible_collections /ansible_collections
+COPY /blueprints /blueprints
+ENV PDS_BLUEPRINT_PATH="/blueprints"
+
+COPY /src/ansible_collections /ansible_collections
+
 WORKDIR /ansible_collections/sodalite/discovery/
 RUN ansible-galaxy collection build --force \
     && ansible-galaxy collection install sodalite-discovery-0.1.0.tar.gz --force
+
+WORKDIR /ansible_collections/sodalite/hpc/
+RUN ansible-galaxy collection build --force \
+    && ansible-galaxy collection install sodalite-hpc-0.1.0.tar.gz --force  
 
 WORKDIR /app
 ENTRYPOINT ["python3"]
