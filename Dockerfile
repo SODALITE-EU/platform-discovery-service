@@ -30,6 +30,8 @@ WORKDIR /ansible_collections/sodalite/hpc/
 RUN ansible-galaxy collection build --force \
     && ansible-galaxy collection install sodalite-hpc-0.1.0.tar.gz --force  
 
+RUN apk add openssh
+
 WORKDIR /app
 ENTRYPOINT ["python3"]
 CMD ["-m", "pds.api.run"]

@@ -1,7 +1,37 @@
 import connexion
 import os
+import subprocess
+import re
+import atexit
 
 from pds.api.openapi import encoder
+from pds.api.log import get_logger
+
+
+logger = get_logger(__name__)
+
+
+def _killAgent():
+    logger.info("killing previously started ssh-agent")
+    subprocess.run(["ssh-agent", "-k"])
+    del os.environ["SSH_AUTH_SOCK"]
+    del os.environ["SSH_AGENT_PID"]
+
+
+def _setupAgent():
+    process = subprocess.run(["ssh-agent", "-s"],
+                             stdout=subprocess.PIPE,
+                             universal_newlines=True)
+    OUTPUT_PATTERN = re.compile("SSH_AUTH_SOCK=(?P<socket>[^;]+).*SSH_AGENT_PID=(?P<pid>\d+)", re.MULTILINE | re.DOTALL )
+    match = OUTPUT_PATTERN.search(process.stdout)
+    if match is None:
+        raise Exception("Could not parse ssh-agent output. It was: {}".format(process.stdout))
+    agentData = match.groupdict()
+    logger.info("ssh agent data: {}".format(agentData))
+    logger.info("exporting ssh agent environment variables")
+    os.environ["SSH_AUTH_SOCK"] = agentData["socket"]
+    os.environ["SSH_AGENT_PID"] = agentData["pid"]
+    atexit.register(_killAgent)
 
 
 def get_app():
@@ -35,8 +65,16 @@ def get_app():
         "VAULT_SECRET_URI": os.getenv("SECRET_VAULT_URI",
                                       "http://localhost:8200/v1/"),
     })
+    if app.app.config["OIDC_INTROSPECTION_ENDPOINT"] == "":
+        logger.warn("Security alert. OIDC_INTROSPECTION_ENDPOINT in not configured.")
+    else:
+        logger.info("OIDC_INTROSPECTION_ENDPOINT {}".format(app.app.config["OIDC_INTROSPECTION_ENDPOINT"]))
+    logger.info("VAULT_LOGIN_URI {}".format(app.app.config["VAULT_LOGIN_URI"]))
+    logger.info("VAULT_SECRET_URI {}".format(app.app.config["VAULT_SECRET_URI"]))
+
     return app
 
 
 if __name__ == "__main__":
+    _setupAgent()
     get_app().run(port=8081, debug=True)
