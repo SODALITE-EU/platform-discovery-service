@@ -13,7 +13,8 @@ node_types:
       ssh_key:
         type: string      
       ssh_key_password:
-        type: string           
+        type: string       
+        default: ""    
     interfaces:
         Standard:
           type: tosca.interfaces.node.lifecycle.Standard
@@ -35,7 +36,8 @@ topology_template:
     ssh-key:
       type: string
     ssh-key-password:
-      type: string      
+      type: string    
+      default: ""  
   node_templates:
 
     localhost:
