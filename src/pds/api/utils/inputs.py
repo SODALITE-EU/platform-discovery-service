@@ -1,6 +1,7 @@
 import requests
 import urllib.parse
 from flask import current_app
+from pds.api.log import get_logger
 
 # use connection pool for OAuth tokeninfo
 adapter = requests.adapters.HTTPAdapter(pool_connections=100, pool_maxsize=100)
@@ -13,6 +14,9 @@ SSH_KEY_PREFIX = "_ssh_key"
 SSH_KEY_PASSWORD_PREFIX = "_ssh_password"
 STORAGE_KEY_PREFIX = "_storage_key"
 
+logger = get_logger(__name__)
+
+
 def preprocess_inputs(inputs, access_token):
     refined_inputs = inputs.copy()
     ssh_keys = []
@@ -20,6 +24,8 @@ def preprocess_inputs(inputs, access_token):
 
     for key in inputs:
         if key.startswith(SECRET_PREFIX):
+            logger.info("Resolving input starting with {0}".format(
+                            SECRET_PREFIX))
             values = inputs[key].split(':')
             if not isinstance(values, list):
                 raise Exception(
@@ -41,6 +47,8 @@ def preprocess_inputs(inputs, access_token):
 
     for key in list(refined_inputs.keys()):
         if key.startswith(SSH_KEY_PREFIX):
+            logger.info("Resolving input starting with {0}".format(
+                            SSH_KEY_PREFIX))
             ssh_key = refined_inputs.pop(key)
             password_key = SSH_KEY_PASSWORD_PREFIX + key[len(SSH_KEY_PREFIX):]
             password = None
@@ -57,6 +65,7 @@ def preprocess_inputs(inputs, access_token):
 
 
 def _get_secret(secret_path, vault_role, access_token) -> dict:
+    logger.info("Obtaining secret from Vault")
     if access_token is None:
         raise Exception(
             "Vault secret retrieval error. Access token is not provided."

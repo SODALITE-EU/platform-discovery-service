@@ -19,6 +19,10 @@ def _get_level_from_envvar(default=base_logging.INFO) -> int:
     return string_levels.get(level_raw, default)
 
 
+def debug_enabled():
+    return _get_level_from_envvar() == base_logging.DEBUG
+
+
 def get_logger(module_name: str) -> base_logging.Logger:
     global_log_level = _get_level_from_envvar()
 
