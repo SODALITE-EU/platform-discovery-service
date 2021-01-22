@@ -8,7 +8,9 @@ FROM python:3.8.6-alpine3.12
 WORKDIR /app
 COPY requirements.txt /app/
 
-RUN export CRYPTOGRAPHY_PREREQS="gcc musl-dev libffi-dev openssl-dev python3-dev openssh-client" \
+RUN apk add openssh openssl-dev openssh-client
+
+RUN export CRYPTOGRAPHY_PREREQS="gcc musl-dev libffi-dev  python3-dev" \
     && export PIP_PREREQS="git" \
     && apk add $CRYPTOGRAPHY_PREREQS $PIP_PREREQS \
     && pip3 install --no-cache-dir wheel \
@@ -29,8 +31,6 @@ RUN ansible-galaxy collection build --force \
 WORKDIR /ansible_collections/sodalite/hpc/
 RUN ansible-galaxy collection build --force \
     && ansible-galaxy collection install sodalite-hpc-0.1.0.tar.gz --force  
-
-RUN apk add openssh
 
 WORKDIR /app
 ENTRYPOINT ["python3"]
