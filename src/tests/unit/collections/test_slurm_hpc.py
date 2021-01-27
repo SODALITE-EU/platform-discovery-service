@@ -78,11 +78,18 @@ class TestTorqueHPCUtils:
         module.return_value = slurm_node, None, None
         result = slurm_node_info.execute_command(module)
         assert result == {}
+        mocker.patch("ansible.module_utils.basic.AnsibleModule.exit_json", return_value=None)
+        mocker.patch("ansible.module_utils.basic.AnsibleModule.__init__", return_value=None)
+        mocker.patch("ansible_collections.sodalite.hpc.plugins.modules.slurm_node_info.execute_command")
+        slurm_node_info.run_module()
 
     def test_slurm_partition_info(self, mocker, slurm_node):
-        module = mocker.patch.object(AnsibleModule,
-                                     'run_command', return_value=True)
+        module = mocker.patch.object(AnsibleModule, 'run_command')
         module.return_value = "", None, None
+
         result = slurm_partition_info.execute_command(module)
         assert result == {}
-
+        mocker.patch("ansible.module_utils.basic.AnsibleModule.exit_json", return_value=None)
+        mocker.patch("ansible.module_utils.basic.AnsibleModule.__init__", return_value=None)
+        mocker.patch("ansible_collections.sodalite.hpc.plugins.modules.slurm_partition_info.execute_command")
+        slurm_partition_info.run_module()

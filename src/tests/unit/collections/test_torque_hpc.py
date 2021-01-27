@@ -159,6 +159,10 @@ class TestTorqueHPCUtils:
         module.return_value = torque_node_stdout, None, None
         result = torque_node_info.execute_command(module)
         assert result == {}
+        mocker.patch("ansible.module_utils.basic.AnsibleModule.exit_json", return_value=None)
+        mocker.patch("ansible.module_utils.basic.AnsibleModule.__init__", return_value=None)
+        mocker.patch("ansible_collections.sodalite.hpc.plugins.modules.torque_node_info.execute_command")
+        torque_node_info.run_module()
 
     def test_torque_queue_info(self, mocker, torque_queue_stdout):
         module = mocker.patch.object(AnsibleModule,
@@ -166,3 +170,7 @@ class TestTorqueHPCUtils:
         module.return_value = torque_queue_stdout, None, None
         result = torque_queue_info.execute_command(module)
         assert result == {}
+        mocker.patch("ansible.module_utils.basic.AnsibleModule.exit_json", return_value=None)
+        mocker.patch("ansible.module_utils.basic.AnsibleModule.__init__", return_value=None)
+        mocker.patch("ansible_collections.sodalite.hpc.plugins.modules.torque_queue_info.execute_command")
+        torque_queue_info.run_module()

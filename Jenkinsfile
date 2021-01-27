@@ -41,7 +41,7 @@ pipeline {
                         """
                 }
             }
-        }
+        } /*
         stage('Build Platform Discovery Service Docker Image') {
             steps {
                 sh """#!/bin/bash
@@ -57,7 +57,7 @@ pipeline {
                         """
                 }
             }
-        }        
+        }     */   
 
     }
 }

@@ -25,10 +25,11 @@ class TestControllers:
             request.is_json = True
             mocker.patch("pds.api.controllers.default.opera_deploy")
             mocker.patch("pds.api.controllers.default.opera_outputs")
+            mocker.patch("pds.api.storages.safe_storage.SafeStorage.create")
             mocker.patch("os.chdir")
             mocker.patch("pds.api.controllers.default._get_access_token", return_value="TEST_TOKEN")
             mocker.patch("pds.api.utils.inputs.preprocess_inputs")
-
+            flask_app.app.config['OIDC_INTROSPECTION_ENDPOINT'] = ""
             mocker.patch("connexion.request.get_json", return_value=discovery_input)
             result = discover()
             assert result[1] == 200
@@ -66,9 +67,9 @@ class TestControllers:
     def test_token_info(self, mocker, flask_app):
         with flask_app.app.app_context():
             mocker.patch("pds.api.controllers.security.session.post")
+            flask_app.app.config['OIDC_INTROSPECTION_ENDPOINT'] = ""
             result = token_info("ACCESS_TOKEN")
             assert len(result) == 1
             assert result["scope"][0] == "uid"
             flask_app.app.config['OIDC_INTROSPECTION_ENDPOINT'] = "test_endpoint"
             result = token_info("ACCESS_TOKEN")
-            

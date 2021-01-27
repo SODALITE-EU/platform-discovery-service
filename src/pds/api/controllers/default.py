@@ -50,7 +50,7 @@ def discover(body: DiscoveryInput = None):
 
         safe_storage = SafeStorage.create(
             prerequisites[1],
-            path + ".opera/"
+            path + "/.opera/"
             )
         os.chdir(path)
         opera_deploy(
