@@ -65,7 +65,7 @@ components:
     oauth2:
       flows:
         password: 
-          tokenUrl: http://keycloak:8100/auth/realms/SODALITE/protocol/openid-connect/token
+          tokenUrl: http://keycloak:8080/auth/realms/SODALITE/protocol/openid-connect/token
           scopes:
             uid: Unique identifier of the user accessing the service.
       type: oauth2
