@@ -1,0 +1,16 @@
+.idea/
+*.iml
+gen/
+src/opera/api/in_progress/
+Dockerfile
+pds-openstack
+.github
+*.jar
+
+make_docker.sh
+validate_tag.sh
+sonar-project.properties
+
+**/__pycache__/
+**/.pytest_cache/
+**/*.py[cod]

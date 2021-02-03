@@ -1,0 +1,14 @@
+pds-openstack/modules/
+pds-openstack/.opera/
+
+gen
+src/pds/api/openapi/
+openapi-generator-cli-4.3.0.jar
+
+venv-test
+venv-deploy
+
+src/coverage.xml
+src/results.xml
+src/.coverage
+**/__pycache__/

@@ -1,0 +1,22 @@
+# OPENSTACK SETTINGS
+ssh-key-name: [SSH KEY NAME]
+image-name: "centos-7 x86_64"
+vm-name: pds-test
+openstack-network-name: xlab
+security-groups: default,remote_access,sodalite-uc
+flavor-name: m1.medium
+ssh_config:
+  IdentityFile:  ~/.ssh/id_rsa
+# DOCKER SETTINGS
+docker-network: sodalite
+docker-public-registry-url: registry.hub.docker.com
+docker-private-registry-url: [PRIVATE REGISTRY IP/URL]
+docker-registry-cert-country-name: SI
+docker-registry-cert-organization-name: XLAB
+docker-registry-cert-email-address: [MAIL - OPTIONAL]
+# PDS SETTINGS
+pds_env:
+  SECRET_VAULT_LOGIN_URI: [VAULT_URI]/auth/jwt/login
+  SECRET_VAULT_URI: [VAULT_URI]
+  OIDC_INTROSPECTION_ENDPOINT: [KEYCLOAK_URI]/auth/realms/SODALITE/protocol/openid-connect/token/introspect
+  OIDC_CLIENT_SECRET: [KEYCLOAK_CLIENT_SECRET]
