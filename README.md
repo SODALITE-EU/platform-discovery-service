@@ -13,10 +13,11 @@ OAuth 2.0 authentication uses confidential client type and requires certain para
 PDS - Vault interaction is configured in a way that PDS acquires a short lived token from Vault and then uses this token to obtain secrets. The following environment variables must be set in order to use Vault as secret storage
 - `SECRET_VAULT_LOGIN_URI`
 - `SECRET_VAULT_URI`
-With Vault configured any input parameter can be substituted with a following pattern:                               
-`_get_secret*: "<path to secret in the vault>:<vault role that that grants access to storage>`
-e.g.
-`_get_secret_ssh_slurm": "pds/ssh_key_slurm:pds`
+
+With Vault configured any input parameter can be substituted with a following pattern:\
+`"_get_secret*": "<path to secret in the vault>:<vault role name that grants access to secret>"`\
+e.g.\
+`"_get_secret_ssh_slurm": "pds/ssh_key_slurm:pds"`
 ### API key 
 OAuth 2.0 authentication be overridden by setting `AUTH_API_KEY` env var. If the var is set then [API key security scheme](https://swagger.io/docs/specification/authentication/api-keys/) is enabled, otherwise API key authorization is disabled.
 This key must be added to requests as `-H  "X-API-Key: [key_name]"`
