@@ -20,14 +20,31 @@ paths:
             schema:
               $ref: "#/components/schemas/DiscoveryInput"
       responses:
-        "202":
+        202:
           description: The discovery was successful.
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/DiscoveryOutput"
-        "500":
+        400:
+          description: Malformed discovery request.
+          content:
+            application/json:
+              schema:
+                type: string                  
+        401:
+          description: Unauthorized request for discovery.
+          content:
+            application/json:
+              schema:
+                type: string                   
+        500:
           description: There was an error during discovery.
+          content:
+            application/json:
+              schema:
+                type: string  
+       
  
 components:
   schemas:
@@ -36,6 +53,7 @@ components:
       type: object
       required:
         - inputs
+        - platform_type
       properties:
         inputs:
           type: object
