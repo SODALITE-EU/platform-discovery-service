@@ -8,7 +8,8 @@ paths:
   /discover:
     post:
       security:
-        - oauth2: [uid] 
+        - apiKey: [ ]      
+        - oauth2: [email] 
       summary: Automatic discovery and modeling of infrastructural resources. 
       operationId: discover
       requestBody:
@@ -62,12 +63,17 @@ components:
         - aws          
 
   securitySchemes:
+    apiKey:
+      type: apiKey
+      x-apikeyInfoFunc: pds.api.controllers.security.check_api_key
+      name: X-API-Key
+      in: header  
     oauth2:
       flows:
         password: 
           tokenUrl: http://keycloak:8080/auth/realms/SODALITE/protocol/openid-connect/token
           scopes:
-            uid: Unique identifier of the user accessing the service.
+            email: Email of the user accessing the service.
       type: oauth2
       x-tokenInfoFunc: pds.api.controllers.security.token_info
       x-scopeValidateFunc: pds.api.controllers.security.validate_scope      

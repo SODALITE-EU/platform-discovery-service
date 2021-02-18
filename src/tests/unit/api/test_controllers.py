@@ -1,7 +1,7 @@
 import pytest
 
-from pds.api.controllers.default import discover, _get_access_token
-from pds.api.controllers.security import token_info, validate_scope
+from pds.api.controllers.default import discover 
+from pds.api.controllers.security import token_info, validate_scope, get_access_token
 
 
 class TestControllers:
@@ -20,14 +20,14 @@ class TestControllers:
         return inputs
 
     def test_discovery(self, mocker, flask_app, discovery_input):
-        with flask_app.app.app_context():
+        with flask_app.app.test_request_context():
             request = mocker.patch("connexion.request")
             request.is_json = True
             mocker.patch("pds.api.controllers.default.opera_deploy")
             mocker.patch("pds.api.controllers.default.opera_outputs")
             mocker.patch("pds.api.storages.safe_storage.SafeStorage.create")
             mocker.patch("os.chdir")
-            mocker.patch("pds.api.controllers.default._get_access_token", return_value="TEST_TOKEN")
+            mocker.patch("pds.api.controllers.security.get_access_token", return_value="TEST_TOKEN")
             mocker.patch("pds.api.utils.inputs.preprocess_inputs")
             flask_app.app.config['OIDC_INTROSPECTION_ENDPOINT'] = ""
             mocker.patch("connexion.request.get_json", return_value=discovery_input)
@@ -40,24 +40,22 @@ class TestControllers:
             assert result[0]["message"] == "Test error"
 
     def test_get_token(self, mocker):
-        request = mocker.patch("connexion.request")
-        mocker.patch("connexion.request.headers.get", return_value="Bearer TEST_TOKEN")
-        _get_access_token(request)
+        mock = mocker.MagicMock()
+        mock.headers = {"Authorization": "Bearer TEST_TOKEN"}
+        token = get_access_token(mock)
+        assert token == "TEST_TOKEN"
 
-        mocker.patch("connexion.request.headers.get", return_value=None)
-        with pytest.raises(Exception) as excinfo:
-            _get_access_token(request)
-        assert excinfo.value.args[0] == "Authorization header absent"
+        mock.headers = {}
+        token = get_access_token(mock)
+        assert token is None
 
-        mocker.patch("connexion.request.headers.get", return_value="BearerTEST_TOKEN")
-        with pytest.raises(Exception) as excinfo:
-            _get_access_token(request)
-        assert excinfo.value.args[0] == "Invalid authorization header"
+        mock.headers = {"Authorization": "BearerTEST_TOKEN"}
+        token = get_access_token(mock)
+        assert token is None
 
-        mocker.patch("connexion.request.headers.get", return_value="None TEST_TOKEN")
-        with pytest.raises(Exception) as excinfo:
-            _get_access_token(request)
-        assert excinfo.value.args[0] == "Invalid authorization type"
+        mock.headers = {"Authorization": "None TEST_TOKEN"}
+        token = get_access_token(mock)
+        assert token is None  
 
     def test_validate_scope(self):
         assert validate_scope(None, None) is True

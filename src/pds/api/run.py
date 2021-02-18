@@ -64,6 +64,7 @@ def get_app():
                                      "http://localhost:8200/v1/auth/jwt/login"),
         "VAULT_SECRET_URI": os.getenv("SECRET_VAULT_URI",
                                       "http://localhost:8200/v1/"),
+        "AUTH_API_KEY": os.getenv("AUTH_API_KEY", ""),                                      
     })
     if app.app.config["OIDC_INTROSPECTION_ENDPOINT"] == "":
         logger.warn("Security alert. OIDC_INTROSPECTION_ENDPOINT in not configured.")
