@@ -56,9 +56,6 @@ node_types:
                 namespace: { type: string, default: { get_property: [SELF, namespace] } }
                 pods_info: { type: string, default: { get_attribute: [SELF, info, pods_info] } }
                 nodes_info: { type: string, default: { get_attribute: [SELF, info, nodes_info] } }
-                kube_config: { type: string, default: { get_property: [SELF, info, kube_config] } }
-                kube_namespace: { type: string, default: { get_property: [SELF, info, kube_namespace] } }
-                kube_kind: { type: string, default: { get_property: [SELF, info, kube_kind] } }
               implementation: 
                 primary: playbooks/kubernetes_transform_info.yml
                 dependencies: 
