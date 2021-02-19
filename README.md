@@ -52,6 +52,7 @@ Supported platform types:
 - `torque`
 - `openstack`
 - `aws` 
+- `kubernetes` 
 ```shell script
 curl -X POST \
   http://localhost:8081/discover \
@@ -67,7 +68,10 @@ Inputs consist of data required for accessing infrastructure targeted for discov
 - If SSH key is passed in inputs, it should have dedicated `_ssh_key` parameter name, that would indicate PDS to add it to SSH agent before discovery process begins. If key is password protected an `_ssh_key_password` should also be added.
 - During the discovery process all intermediate results are stored in encrypted disc storage, that is implemented using [Fernet](https://cryptography.io/en/latest/fernet.html). Fernet encryption key must be provided and could be set either as `PDS_STORAGE_KEY` env var or passed as `_storage_key` inputs parameter.
 
-Inputs example:
+### Inputs example:
+
+#### Slurm
+
 ```json
 "inputs" : 
 {
@@ -79,4 +83,16 @@ Inputs example:
 }
 ```  
 
+#### Kubernetes
 
+`kube_namespace` and `kube_kind` are optional and if empty, all supported objects will be discovered. Currently only pods (`"kube_kind": "Pod"`) and nodes (`"kube_kind": "Node"`) can be discovered.
+
+```json
+"inputs" : 
+{
+    "namespace": "TestKubernetes",
+    "kube_config": "~/.kube/config",
+    "kube_namespace": "default",
+    "kube_kind": "Node"    
+}
+```  
