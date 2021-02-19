@@ -2,6 +2,11 @@
 Platform Discovery Service (PDS) provides [TOSCA](https://docs.oasis-open.org/tosca/TOSCA/v2.0/TOSCA-v2.0.html) resource descriptions for target platforms. Service method takes data required to access the platform as an input and creates a usable TOSCA service template definition from an obtained infrastructure description. PDS core is [xOpera](https://github.com/xlab-si/xopera-opera), a lightweight orchestrator, used as a module to execute TOSCA discovery blueprints for a predefined set of platforms. For each platform specialized Ansible collections or modules are used to implement specific resource discovery and gather resource description data in JSON format. The gathered data is converted from JSON into TOSCA resource template definitions through the jinja templating. This design improves code reusability as TOSCA discovery blueprints can be used separately with TOSCA orchestrators to create a TOSCA representation of the infrastructure even outside the Platform Discovery Service. 
 Platform Discovery Service (PDS) is implemented as a REST API. The interface design is based on the OpenAPI 3.0 specification. [OpenAPI Generator](https://github.com/OpenAPITools/openapi-generator) is used to create stubs for REST API controllers and models. 
 
+| ![Platform Discovery Service - Architecture](https://user-images.githubusercontent.com/54895612/108510799-419c1480-72bf-11eb-889c-6dcb6890ea61.png) | 
+|:--:| 
+| *Figure 1. Platform Discovery Service - Architecture.* |
+
+
 ## Authorization configuration
 By default PDS REST API uses [OAuth 2.0](https://tools.ietf.org/html/rfc6750) for authentication and authorization, namely [Resource Owner Password Credentials Grant flow](https://tools.ietf.org/html/rfc6749#section-4.3). This requires [Keycloak](https://www.keycloak.org/) to be installed and configured. Optionally a Secret Manager [Hashicorp Vault](https://www.vaultproject.io/) can be used for securely storing and handling user secrets. 
 ### OAuth 2.0 
