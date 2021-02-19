@@ -1,0 +1,102 @@
+tosca_definitions_version: tosca_simple_yaml_1_3 
+
+node_types:
+  
+  sodalite.nodes.edge.kubernetes.info: 
+    derived_from: tosca.nodes.Root
+    properties:
+      kube_config:
+        type: string 
+        default: ""
+      kube_namespace:
+        type: string 
+        default: ""
+      kube_kind:
+        type: string 
+        default: ""
+    attributes: 
+      pods_info:
+        type: string    
+        default: ""       
+      nodes_info:
+        type: string    
+        default: ""         
+    interfaces:
+        Standard:
+          type: tosca.interfaces.node.lifecycle.Standard
+          operations:
+            create:
+              inputs:
+                kube_config: { type: string, default: { get_property: [SELF, kube_config] } }
+                kube_namespace: { type: string, default: { get_property: [SELF, kube_namespace] } }
+                kube_kind: { type: string, default: { get_property: [SELF, kube_kind] } }
+              implementation: 
+                primary: playbooks/kubernetes_get_info.yml
+
+
+  sodalite.nodes.edge.kubernetes.transform: 
+    derived_from: tosca.nodes.Root
+    properties:
+      namespace:
+        type: string 
+    attributes:
+      transformation_result:
+        type: string    
+    requirements:
+      - info:
+          node: sodalite.nodes.edge.kubernetes.info
+          capability: tosca.capabilities.Root
+          relationship: tosca.relationships.DependsOn   
+    interfaces:
+        Standard:
+          type: tosca.interfaces.node.lifecycle.Standard
+          operations:
+            create:
+              inputs:
+                namespace: { type: string, default: { get_property: [SELF, namespace] } }
+                pods_info: { type: string, default: { get_attribute: [SELF, info, pods_info] } }
+                nodes_info: { type: string, default: { get_attribute: [SELF, info, nodes_info] } }
+                kube_config: { type: string, default: { get_property: [SELF, info, kube_config] } }
+                kube_namespace: { type: string, default: { get_property: [SELF, info, kube_namespace] } }
+                kube_kind: { type: string, default: { get_property: [SELF, info, kube_kind] } }
+              implementation: 
+                primary: playbooks/kubernetes_transform_info.yml
+                dependencies: 
+                  - artifacts/kubernetes.j2.yaml                
+
+topology_template:
+
+  inputs:
+    namespace:
+      type: string  
+    kube_config:
+      type: string 
+      default: ""
+    kube_namespace:
+      type: string 
+      default: ""
+    kube_kind:
+      type: string 
+      default: ""
+
+  node_templates:
+
+    edge-kubernetes-info:
+      type: sodalite.nodes.edge.kubernetes.info   
+      properties: 
+        kube_config: { get_input: kube_config }    
+        kube_namespace: { get_input: kube_namespace }    
+        kube_kind: { get_input: kube_kind }    
+ 
+
+    edge-kubernetes-transform:
+      type: sodalite.nodes.edge.kubernetes.transform
+      properties:
+        namespace: { get_input: namespace }
+      requirements:
+        - info: edge-kubernetes-info 
+                
+
+  outputs:
+    output-kubernetes-tosca:      
+      value: { get_attribute: [ edge-kubernetes-transform, transformation_result ] }        

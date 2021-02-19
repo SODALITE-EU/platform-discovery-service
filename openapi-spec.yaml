@@ -79,6 +79,7 @@ components:
         - torque
         - openstack
         - aws          
+        - kubernetes          
 
   securitySchemes:
     apiKey:

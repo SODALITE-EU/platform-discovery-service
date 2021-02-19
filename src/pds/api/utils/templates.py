@@ -17,6 +17,8 @@ def get_service_template(blueprint_type: str):
         return os.path.join(blueprint_folder, "torque"), "torque_wm_info.yaml"
     if blueprint_type == PlatformType.OPENSTACK:
         return os.path.join(blueprint_folder, "openstack"), "openstack_info.yaml"
+    if blueprint_type == PlatformType.KUBERNETES:
+        return os.path.join(blueprint_folder, "kubernetes"), "kubernetes_info.yaml"
     if blueprint_type == SSH_KEY_BLUEPRINT:
         return os.path.join(blueprint_folder, "auth"), "ssh_key.yaml"
 
