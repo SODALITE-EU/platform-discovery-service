@@ -40,7 +40,7 @@ python3 -m venv .venv
 source .venv/bin/activate
 pip install wheel
 pip install -r requirements.txt
-export PDS_BLUEPRINT_PATH="../blueprints"
+export PDS_BLUEPRINT_PATH=$(pwd)/blueprints
 export AUTH_API_KEY="TEST"
 cd src/
 python3 -m pds.api.run
