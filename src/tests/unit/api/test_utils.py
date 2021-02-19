@@ -52,6 +52,8 @@ class TestUtils:
             assert bp_name[1] == "openstack_info.yaml"
             bp_name = templates.get_service_template(PlatformType.TORQUE)
             assert bp_name[1] == "torque_wm_info.yaml"
+            bp_name = templates.get_service_template(PlatformType.KUBERNETES)
+            assert bp_name[1] == "kubernetes_info.yaml"
 
     def test_environment_setup(self, mocker, flask_app):
         with flask_app.app.app_context():

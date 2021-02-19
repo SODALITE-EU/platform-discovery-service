@@ -1,0 +1,24 @@
+- hosts: all
+  gather_facts: no
+  tasks:
+    - name: "Get pods"
+      community.kubernetes.k8s_info:
+        kubeconfig: "{{ kube_config }}"
+        namespace: "{{ kube_namespace }}"
+        kind: Pod
+      register: pods_list
+      when: kube_kind == "Pod" or kube_kind == ""
+
+    - name: "Get nodes"
+      community.kubernetes.k8s_info:
+        kubeconfig: "{{ kube_config }}"
+        namespace: "{{ kube_namespace }}"
+        kind: Node
+      register: nodes_list
+      when: kube_kind == "Node" or kube_kind == ""
+
+    - name: Set attributes
+      set_stats:
+        data:
+          pods_info: "{{ pods_list if pods_list is defined else '' }}"     
+          nodes_info: "{{ nodes_list if nodes_list is defined else '' }}"

@@ -1,0 +1,63 @@
+tosca_definitions_version: tosca_simple_yaml_1_3 
+
+node_types:
+
+  # TODO: Full support is yet to be provided, currently output names
+  sodalite.nodes.Kubernetes.{{ namespace }}.Pod:  
+    derived_from: tosca.nodes.Root 
+    properties:  
+      name:  
+        description: Name of the pod
+        required: True 
+        type: string
+      namespace:
+        description: Kubernetes namespace
+        required: True
+        type: string
+
+  sodalite.nodes.Kubernetes.{{ namespace }}.Node:  
+    derived_from: tosca.nodes.Root 
+    properties:  
+      name:  
+        description: Name of the node
+        required: True 
+        type: string 
+      annotations:  
+        required: False 
+        type: map
+        default: {}
+      labels:  
+        required: False 
+        type: map
+        default: {}
+
+topology_template:
+
+  node_templates:
+
+{% if pods_info | length  %}
+{% for pod in pods_info.resources | default([]) %}
+    pod-{{ pod.metadata.name | replace(" ","_") }}: 
+      type: sodalite.nodes.Kubernetes.{{ namespace }}.Pod
+      properties:
+        name: {{ pod.metadata.name }}
+        namespace: {{ pod.metadata.namespace }}
+{% endfor %}
+{% endif %}
+
+{% if nodes_info | length  %}
+{% for node in nodes_info.resources | default([]) %}
+    node-{{ node.metadata.name | replace(" ","_") }}: 
+      type: sodalite.nodes.Kubernetes.{{ namespace }}.Node
+      properties:
+        name: {{ node.metadata.name }}
+{% if node.metadata.annotations  %}
+        annotations:
+{{ node.metadata.annotations | to_nice_yaml(indent=2) | indent(width=10, indentfirst=True) -}}
+{% endif %}
+{% if node.metadata.labels  %}
+        labels:
+{{ node.metadata.labels | to_nice_yaml(indent=2) | indent(width=10, indentfirst=True) -}}
+{% endif %}
+{% endfor %}
+{% endif %}
