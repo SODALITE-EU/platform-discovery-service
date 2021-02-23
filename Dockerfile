@@ -4,13 +4,13 @@ COPY . /build/
 RUN /build/generate.sh
 
 
-FROM python:3.8.6-alpine3.12
+FROM python:3.8.7-alpine3.13
 WORKDIR /app
 COPY requirements.txt /app/
 
 RUN apk add openssh openssl-dev openssh-client
 
-RUN export CRYPTOGRAPHY_PREREQS="gcc musl-dev libffi-dev  python3-dev" \
+RUN export CRYPTOGRAPHY_PREREQS="gcc musl-dev libffi-dev  python3-dev cargo" \
     && export PIP_PREREQS="git" \
     && apk add $CRYPTOGRAPHY_PREREQS $PIP_PREREQS \
     && pip3 install --no-cache-dir wheel \
