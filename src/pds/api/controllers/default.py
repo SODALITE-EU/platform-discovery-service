@@ -3,12 +3,13 @@ import os
 import datetime
 import pds.api.utils.templates as templates
 
-from pds.api.openapi.models.discovery_input import DiscoveryInput
-from pds.api.openapi.models.discovery_output import DiscoveryOutput
-
-from pds.api.log import get_logger, debug_enabled
 from opera.commands.deploy import deploy_service_template as opera_deploy
 from opera.commands.outputs import outputs as opera_outputs
+
+from pds.api.openapi.models.discovery_input import DiscoveryInput
+from pds.api.openapi.models.discovery_output import DiscoveryOutput
+from pds.api.controllers.security import get_access_token
+from pds.api.log import get_logger, debug_enabled
 from pds.api.storages.safe_storage import SafeStorage
 from pds.api.utils.inputs import preprocess_inputs
 from pds.api.utils.environment import DeploymentEnvironment
@@ -44,7 +45,7 @@ def discover(body: DiscoveryInput = None):
 
     try:
         # TODO: Disable verbose mode universally
-        access_token = _get_access_token(connexion.request)
+        access_token = get_access_token(connexion.request)
         prerequisites = preprocess_inputs(discovery_input.inputs, access_token)
         environment.setup(prerequisites[2], prerequisites[3])
 
@@ -70,17 +71,3 @@ def discover(body: DiscoveryInput = None):
 
     now = datetime.datetime.now(tz=datetime.timezone.utc)
     return DiscoveryOutput(now.isoformat(), result), 200
-
-
-def _get_access_token(request):
-    authorization = request.headers.get("Authorization")
-    if not authorization:
-        raise Exception("Authorization header absent")
-    try:
-        auth_type, token = authorization.split(None, 1)
-    except ValueError:
-        raise Exception("Invalid authorization header")
-
-    if auth_type.lower() != "bearer":
-        raise Exception("Invalid authorization type")
-    return token

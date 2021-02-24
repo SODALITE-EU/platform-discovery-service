@@ -3,7 +3,6 @@ pds-openstack/.opera/
 
 gen
 src/pds/api/openapi/
-openapi-generator-cli-4.3.0.jar
 
 venv-test
 venv-deploy
@@ -12,3 +11,13 @@ src/coverage.xml
 src/results.xml
 src/.coverage
 **/__pycache__/
+.venv/
+.vscode/
+.opera/
+tmp/
+inputs.yaml
+input.yaml
+test/
+*.tar.gz
+*.jar
+args.json

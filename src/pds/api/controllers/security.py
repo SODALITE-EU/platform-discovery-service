@@ -9,6 +9,13 @@ session.mount('http://', adapter)
 session.mount('https://', adapter)
 
 
+def check_api_key(apikey, required_scopes=None):
+    configured_key = current_app.config['AUTH_API_KEY']
+    if not configured_key or apikey != configured_key:
+        return None
+
+    return {'scope': ['apiKey']}
+
 def token_info(access_token) -> dict:
     request = {'token': access_token}
     headers = {'Content-type': 'application/x-www-form-urlencoded'}
@@ -35,3 +42,15 @@ def token_info(access_token) -> dict:
 
 def validate_scope(required_scopes, token_scopes) -> bool:
     return True
+
+def get_access_token(request):
+    authorization = request.headers.get("Authorization")
+    if not authorization:
+        return None
+    try:
+        auth_type, token = authorization.split(None, 1)
+    except ValueError:
+        return None
+    if auth_type.lower() != "bearer":
+        return None
+    return token 
