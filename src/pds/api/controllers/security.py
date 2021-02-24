@@ -43,6 +43,7 @@ def token_info(access_token) -> dict:
 def validate_scope(required_scopes, token_scopes) -> bool:
     return True
 
+
 def get_access_token(request):
     authorization = request.headers.get("Authorization")
     if not authorization:
@@ -53,4 +54,5 @@ def get_access_token(request):
         return None
     if auth_type.lower() != "bearer":
         return None
-    return token 
+    return token
+

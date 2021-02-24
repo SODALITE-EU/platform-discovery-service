@@ -20,7 +20,6 @@ logger = get_logger(__name__)
 def preprocess_inputs(inputs, access_token):
     refined_inputs = inputs.copy()
     ssh_keys = []
-    env_vars = []
 
     for key in inputs:
         if key.startswith(SECRET_PREFIX):
@@ -61,7 +60,7 @@ def preprocess_inputs(inputs, access_token):
     else:
         storage_key = current_app.config['STORAGE_KEY'].encode()
 
-    return refined_inputs, storage_key, ssh_keys, env_vars
+    return refined_inputs, ssh_keys, storage_key
 
 
 def _get_secret(secret_path, vault_role, access_token) -> dict:

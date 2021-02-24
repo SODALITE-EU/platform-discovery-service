@@ -61,9 +61,8 @@ class TestUtils:
             mocker.patch("pds.api.utils.environment.opera_undeploy")
             mocker.patch("os.chdir")
             ssh_keys = [("TEST_KEY", "TEST_PASS")]
-            env_vars = ["TEST_VAR"]
             env = DeploymentEnvironment()
-            env.setup(ssh_keys, env_vars)
+            env.setup(ssh_keys)
             assert len(env.deployments) == 1
             env.cleanup()
             assert len(env.deployments) == 1
@@ -84,11 +83,11 @@ class TestUtils:
             mocker.patch("pds.api.utils.inputs.session.post")
             result = inputs.preprocess_inputs(inputs_dict_full, "ACCESS_TOKEN")
             assert len(result[0]) == 3
-            assert len(result[2]) == 1
-            assert result[2][0][0] == "test"
-            assert result[2][0][1] == inputs_dict_full["_ssh_password"]
+            assert len(result[1]) == 1
+            assert result[1][0][0] == "test"
+            assert result[1][0][1] == inputs_dict_full["_ssh_password"]
 
-    def test_preprocess_both_keys(self, mocker, flask_app, inputs_dict_ssh):
+    def test_preprocess_ssh(self, mocker, flask_app, inputs_dict_ssh):
         def get_json():
             return {
                         "data":
@@ -104,13 +103,13 @@ class TestUtils:
             mocker.patch("pds.api.utils.inputs.session.post")
             result = inputs.preprocess_inputs(inputs_dict_ssh, "ACCESS_TOKEN")
             assert len(result[0]) == 3
-            assert len(result[2]) == 1
-            assert result[2][0][0] == "test"
-            assert result[2][0][1] == inputs_dict_ssh["_ssh_password"]
+            assert len(result[1]) == 1
+            assert result[1][0][0] == "test"
+            assert result[1][0][1] == inputs_dict_ssh["_ssh_password"]
 
     def test_preprocess_simple(self, mocker, flask_app, inputs_dict_simple):
         with flask_app.app.app_context():
             result = inputs.preprocess_inputs(inputs_dict_simple, "")
             assert len(result[0]) == 3
-            assert len(result[2]) == 0
+            assert len(result[1]) == 0
     

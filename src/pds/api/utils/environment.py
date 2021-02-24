@@ -8,18 +8,21 @@ from opera.commands.undeploy import undeploy as opera_undeploy
 
 logger = get_logger(__name__)
 
+
 class DeploymentEnvironment:
 
     def __init__(self):
+        self.path = os.getcwd()
         self.deployments = {}
 
-    def setup(self, ssh_keys, env_vars):
+    def setup(self, ssh_keys):
         for ssh_key in ssh_keys:
             self.deployments[templates.SSH_KEY_BLUEPRINT] = \
                 self._deploy_key(ssh_key[0], ssh_key[1])
 
     def cleanup(self):
         errors = []
+        os.chdir(self.path)
         for key, deployment in self.deployments.items():
             try:
                 path, template = templates.get_service_template(key)
@@ -27,6 +30,8 @@ class DeploymentEnvironment:
                 self._undeploy(deployment)
             except Exception as ex:
                 errors.append(ex)
+            finally:
+                os.chdir(self.path)
         return errors
 
     def _deploy_key(self, key, password):
@@ -46,7 +51,7 @@ class DeploymentEnvironment:
             verbose_mode=debug_enabled(), num_workers=1,
             delete_existing_state=True
             )
-
+        os.chdir(self.path)
         return mem_storage
 
     def _undeploy(self, storage):

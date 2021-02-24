@@ -10,7 +10,7 @@ from pds.api.openapi.models.discovery_input import DiscoveryInput
 from pds.api.openapi.models.discovery_output import DiscoveryOutput
 from pds.api.controllers.security import get_access_token
 from pds.api.log import get_logger, debug_enabled
-from pds.api.storages.safe_storage import SafeStorage
+from pds.api.storages.memory_storage import SafeMemoryStorage
 from pds.api.utils.inputs import preprocess_inputs
 from pds.api.utils.environment import DeploymentEnvironment
 
@@ -36,7 +36,7 @@ def discover(body: DiscoveryInput = None):
             )
     else:
         return {"Incorrect input"}, 500
-
+    default_path = os.getcwd()
     path, template = templates.get_service_template(
         discovery_input.platform_type
         )
@@ -46,20 +46,19 @@ def discover(body: DiscoveryInput = None):
     try:
         # TODO: Disable verbose mode universally
         access_token = get_access_token(connexion.request)
-        prerequisites = preprocess_inputs(discovery_input.inputs, access_token)
-        environment.setup(prerequisites[2], prerequisites[3])
+        refined_inputs, ssh_keys, storage_key = \
+            preprocess_inputs(discovery_input.inputs, access_token)
+        environment.setup(ssh_keys)
 
-        safe_storage = SafeStorage.create(
-            prerequisites[1],
-            path + "/.opera/"
-            )
+        safe_storage = SafeMemoryStorage.create()
         os.chdir(path)
         opera_deploy(
-            template, prerequisites[0], safe_storage,
+            template, refined_inputs, safe_storage,
             verbose_mode=debug_enabled(),
             num_workers=1, delete_existing_state=True
             )
         result = opera_outputs(safe_storage)
+        os.chdir(default_path)
     except Exception as ex:
         logger.exception("An error occurred during discovery process")
         return {"message": str(ex)}, 500
