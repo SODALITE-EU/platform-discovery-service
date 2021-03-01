@@ -101,3 +101,31 @@ Inputs consist of data required for accessing infrastructure targeted for discov
     "kube_kind": "Node"    
 }
 ```  
+
+Additionally, PDS supports Kubernetes behind a front-end node accessible via SSH (e.g. in case of edge computing infrastructure). In this case, an example input is the following:
+
+```json
+"inputs": 
+{
+    "namespace": "TestKubernetes",
+    "kube_config": "~/.kube/config",
+    "kube_namespace": "default",
+    "kube_kind": "Node",
+    "frontend_address": "X.X.X.X",
+    "frontend_user": "some_user"
+}
+```  
+
+The examples above assume that the KUBECONFIG file exists locally or on the front-end. KUBECONFIG file content can be passed directly using special input: `kube_config_raw`. In case the content is in Vault `_get_secret_kube_config_raw` input should be used as explained earlier:
+
+```json
+"inputs": 
+{
+    "namespace": "TestKubernetes",
+    "_get_secret_kube_config_raw": "<path to secret in the vault>:<vault role name that grants access to secret>",
+    "kube_namespace": "default",
+    "kube_kind": "Node",
+    "frontend_address": "X.X.X.X",
+    "frontend_user": "some_user"
+}
+```  
