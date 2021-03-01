@@ -57,7 +57,7 @@ topology_template:
 {% endif %}
 {% if node.metadata.labels  %}
         labels:
-{{ node.metadata.labels | to_nice_yaml(indent=2) | indent(width=10, indentfirst=True) -}}
+{{ node.metadata.labels | to_nice_yaml(indent=2) | indent(width=10, indentfirst=True) }}
 {% endif %}
 {% endfor %}
 {% endif %}
