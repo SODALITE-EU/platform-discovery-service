@@ -36,47 +36,72 @@ node_types:
           - min_length: 1 
         type: map 
         entry_schema:  
-          type: sodalite.datatypes.OpenStack.SecurityRule 
+          type: sodalite.datatypes.OpenStack.{{ namespace }}.SecurityRule 
       group_description:  
         description: Description of the security group in openstack. 
-        required: True 
+        required: False 
         type: string 
+        default: ''
 
   sodalite.nodes.OpenStack.{{ namespace }}.Flavor:
     derived_from: tosca.nodes.Root
     properties:
       id:
         type: string
-        required: true
-        default: ""
+        required: True
+        default: ''
       flavor_name:
         type: string
-        required: true
-        default: ""
+        required: True
+        default: ''
       is_public:
         type: boolean
-        required: true
-        default: ""
+        required: True
+        default: False
       ram:
         type: integer
-        required: true
+        required: True
         default: 0
       vcpus:
         type: integer
-        required: true
+        required: True
         default: 0 
       disk:
         type: integer
-        required: true
+        required: True
         default: 0
 
-   sodalite.nodes.OpenStack.{{ namespace }}.Image:
+  sodalite.nodes.OpenStack.{{ namespace }}.Image:
     derived_from: tosca.nodes.Root
     properties:
-      image:
+      id:
         type: string
+        required: True
+        default: ''      
+      image_name:
+        type: string
+        required: True
         description: OpenStack image name
-        default: ""
+        default: ''
+      is_public:
+        type: boolean
+        required: True
+        default: False        
+      architecture:  
+        type: string
+        required: false
+        description: OpenStack image architecture
+        default: ''
+      min_disk:  
+        type: integer
+        required: True
+        description: OpenStack image min disk requirements
+        default: 0
+      min_ram:  
+        type: integer
+        required: True
+        description: OpenStack image min RAM requirements
+        default: 0           
 
   sodalite.nodes.OpenStack.{{ namespace }}.Network:
     derived_from: tosca.nodes.Root
@@ -105,7 +130,7 @@ topology_template:
 {% for security_group in os_security_groups.openstack_security_group %}
 {% if security_group.name != "default" %}
     security-rules-{{ security_group.name }}:  
-      type: sodalite.nodes.OpenStack.SecurityRules 
+      type: sodalite.nodes.OpenStack.{{ namespace }}.SecurityRules 
       properties:
         ports:
 {% for security_group_rule in security_group.security_group_rules %}
@@ -120,15 +145,13 @@ topology_template:
         group_name: {{ security_group.name }}
 {% if security_group.description|length %}
         group_description: {{ security_group.description }}
-{% else %}
-        group_description: ""
 {% endif %}
 
 {% endif %}
 {% endfor %}
 {% for network in os_networks.openstack_networks %}
     network-{{ network.name | replace(" ","_") }}: 
-      type: sodalite.nodes.OpenStack.Network
+      type: sodalite.nodes.OpenStack.{{ namespace }}.Network
       properties:
         name: {{ network.name }}
         mtu: {{ network.mtu }}
@@ -136,8 +159,31 @@ topology_template:
 {% endfor %}
 {% for key_pair in os_key_pairs.openstack_key_pair %}
     key-pair-{{ key_pair.name | replace(" ","_") }}: 
-      type: sodalite.nodes.OpenStack.KeyPair
+      type: sodalite.nodes.OpenStack.{{ namespace }}.KeyPair
       properties:
         name: {{ key_pair.name }}
+
+{% endfor %}  
+{% for flavor in os_flavor_info.openstack_flavors %}
+    flavor-{{ flavor.name | replace(" ","_") | replace(".","_") }}: 
+      type: sodalite.nodes.OpenStack.{{ namespace }}.Flavor
+      properties:
+        id: {{ flavor.id }}
+        flavor_name: {{ flavor.name }}
+        ram: {{ flavor.ram }}
+        vcpus: {{ flavor.vcpus }}
+        disk: {{ flavor.disk }}
+        is_public: {{ flavor.is_public }}
+
+{% endfor %}  
+{% for image in os_image_info.openstack_image %}
+    image-{{ image.name | replace(" ","_") | replace(".","_") }}: 
+      type: sodalite.nodes.OpenStack.{{ namespace }}.Image
+      properties:
+        id: {{ image.id }}
+        image_name: {{ image.name }}
+        min_disk: {{ image.min_disk }}
+        min_ram: {{ image.min_ram }}
+        is_public: {{ image.is_public }}
 
 {% endfor %}  
