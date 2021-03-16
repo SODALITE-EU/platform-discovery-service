@@ -2,6 +2,7 @@ import connexion
 import os
 import datetime
 import pds.api.utils.templates as templates
+import yaml
 
 from opera.commands.deploy import deploy_service_template as opera_deploy
 from opera.commands.outputs import outputs as opera_outputs
@@ -12,6 +13,7 @@ from pds.api.controllers.security import get_access_token
 from pds.api.log import get_logger, debug_enabled
 from pds.api.storages.memory_storage import SafeMemoryStorage
 from pds.api.utils.inputs import preprocess_inputs
+from pds.api.utils.reasoner_client import save_tosca
 from pds.api.utils.environment import DeploymentEnvironment
 
 logger = get_logger(__name__)
@@ -36,6 +38,47 @@ def discover(body: DiscoveryInput = None):
             )
     else:
         return {"Incorrect input"}, 500
+    try:
+        return_value = _discover(discovery_input)
+    except Exception as ex:
+        logger.exception("An error occurred during discovery process")
+        return {"message": str(ex)}, 500
+    now = datetime.datetime.now(tz=datetime.timezone.utc)
+    return DiscoveryOutput(now.isoformat(), return_value), 200
+
+
+def discover_update(body: DiscoveryInput = None):
+    """Automatic discovery and modeling of infrastructural resources.
+
+     # noqa: E501
+
+    :param discovery_input: Endpoint information and access credentials.
+    :type discovery_input: dict | bytes
+
+    :rtype: DiscoveryOutput
+    """
+    logger.debug("Entry: update")
+    logger.debug(body)
+
+    if connexion.request.is_json:
+        discovery_input = DiscoveryInput.from_dict(
+            connexion.request.get_json()
+            )
+    else:
+        return {"Incorrect input"}, 500
+
+    try:
+        discovery_result = _discover(discovery_input)
+    except Exception as ex:
+        logger.exception("An error occurred during discovery process")
+        return {"message": str(ex)}, 500
+    access_token = get_access_token(connexion.request)
+    return save_tosca(discovery_result,
+                      discovery_input.namespace,
+                      access_token)
+
+
+def _discover(discovery_input):
     default_path = os.getcwd()
     path, template = templates.get_service_template(
         discovery_input.platform_type
@@ -47,7 +90,9 @@ def discover(body: DiscoveryInput = None):
         # TODO: Disable verbose mode universally
         access_token = get_access_token(connexion.request)
         refined_inputs, ssh_keys, storage_key = \
-            preprocess_inputs(discovery_input.inputs, access_token)
+            preprocess_inputs(discovery_input.inputs,
+                              access_token,
+                              discovery_input.namespace)
         environment.setup(ssh_keys)
 
         safe_storage = SafeMemoryStorage.create()
@@ -59,14 +104,11 @@ def discover(body: DiscoveryInput = None):
             )
         result = opera_outputs(safe_storage)
         os.chdir(default_path)
-    except Exception as ex:
-        logger.exception("An error occurred during discovery process")
-        return {"message": str(ex)}, 500
+        if len(result) != 1 or "value" not in list(result.values())[0]:
+            raise KeyError("Error in discovery process output")
+        return list(result.values())[0]["value"]
     finally:
         errors = environment.cleanup()
         for error in errors:
             logger.warn("An error occurred during cleanup")
             logger.warn(error)
-
-    now = datetime.datetime.now(tz=datetime.timezone.utc)
-    return DiscoveryOutput(now.isoformat(), result), 200

@@ -81,7 +81,9 @@ class TestUtils:
             mocker.patch("pds.api.utils.inputs.session.get",
                          return_value=get_response)
             mocker.patch("pds.api.utils.inputs.session.post")
-            result = inputs.preprocess_inputs(inputs_dict_full, "ACCESS_TOKEN")
+            result = inputs.preprocess_inputs(inputs_dict_full,
+                                              "ACCESS_TOKEN",
+                                              "testNamespace")
             assert len(result[0]) == 3
             assert len(result[1]) == 1
             assert result[1][0][0] == "test"
@@ -101,7 +103,9 @@ class TestUtils:
             mocker.patch("pds.api.utils.inputs.session.get",
                          return_value=get_response)
             mocker.patch("pds.api.utils.inputs.session.post")
-            result = inputs.preprocess_inputs(inputs_dict_ssh, "ACCESS_TOKEN")
+            result = inputs.preprocess_inputs(inputs_dict_ssh,
+                                              "ACCESS_TOKEN",
+                                              "testNamespace")
             assert len(result[0]) == 3
             assert len(result[1]) == 1
             assert result[1][0][0] == "test"
@@ -109,7 +113,9 @@ class TestUtils:
 
     def test_preprocess_simple(self, mocker, flask_app, inputs_dict_simple):
         with flask_app.app.app_context():
-            result = inputs.preprocess_inputs(inputs_dict_simple, "")
+            result = inputs.preprocess_inputs(inputs_dict_simple,
+                                              "",
+                                              "testNamespace")
             assert len(result[0]) == 3
             assert len(result[1]) == 0
-    
+            assert result[0]["namespace"] == "testNamespace"

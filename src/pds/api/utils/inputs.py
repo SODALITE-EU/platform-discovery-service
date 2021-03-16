@@ -17,9 +17,11 @@ STORAGE_KEY_PREFIX = "_storage_key"
 logger = get_logger(__name__)
 
 
-def preprocess_inputs(inputs, access_token):
+def preprocess_inputs(inputs, access_token, namespace):
     refined_inputs = inputs.copy()
     ssh_keys = []
+
+    refined_inputs["namespace"] = namespace
 
     for key in inputs:
         if key.startswith(SECRET_PREFIX):
