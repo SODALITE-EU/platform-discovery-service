@@ -178,7 +178,7 @@ pipeline {
                     python3 -m venv venv-deploy
                     . venv-deploy/bin/activate
                     python3 -m pip install --upgrade pip
-                    python3 -m pip install opera[openstack]==0.6.4 docker
+                    python3 -m pip install opera==0.6.4 openstacksdk==0.52.0 docker
                     rm -r -f pds-openstack/modules/
                     git clone -b 3.3.0 https://github.com/SODALITE-EU/iac-modules.git pds-openstack/modules/
                     ansible-galaxy install -r pds-openstack/modules/requirements.yml --force
