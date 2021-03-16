@@ -25,9 +25,11 @@ pipeline {
             docker_public_registry_url = "registry.hub.docker.com"
             docker_registry_cert_email_address = "dragan.radolovic@xlab.si"
             //KEYCLOAK SETTINGS
-            KEYCLOAK_URL = credentials('keycloak-url')
+            KEYCLOAK_URI = credentials('keycloak-url')
             KEYCLOAK_CLIENT_ID = credentials('keycloak-client-id')
             KEYCLOAK_CLIENT_SECRET = credentials('keycloak-client-secret')
+            // VAULT settings
+            VAULT_URI = credentials('vault-url')
             // OPENSTACK DEPLOYMENT FALLBACK SETTINGS
             OS_PROJECT_DOMAIN_NAME = "Default"
             OS_USER_DOMAIN_NAME = "Default"
