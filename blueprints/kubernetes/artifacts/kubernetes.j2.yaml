@@ -2,8 +2,14 @@ tosca_definitions_version: tosca_simple_yaml_1_3
 
 node_types:
 
+  sodalite.nodes.Kubernetes.Definition:
+    derived_from: tosca.nodes.SoftwareComponent
+  
+  sodalite.nodes.Kubernetes.Kind:
+    derived_from: tosca.nodes.SoftwareComponent
+
   # TODO: Full support is yet to be provided, currently output names
-  sodalite.nodes.Kubernetes.{{ namespace }}.Pod:  
+  sodalite.nodes.Kubernetes.Pod:  
     derived_from: tosca.nodes.Root 
     properties:  
       name:  
@@ -15,8 +21,12 @@ node_types:
         required: True
         type: string
 
-  sodalite.nodes.Kubernetes.{{ namespace }}.Node:  
-    derived_from: tosca.nodes.Root 
+  sodalite.nodes.Kubernetes.Node:  
+    derived_from: tosca.nodes.Compute
+    capabilities:
+      host:
+        type: tosca.capabilities.Compute
+        valid_source_types: [ sodalite.nodes.Kubernetes.Kind, sodalite.nodes.Kubernetes.Definition ]
     properties:  
       name:  
         description: Name of the node
@@ -30,6 +40,38 @@ node_types:
         required: False 
         type: map
         default: {}
+      gpu_selector:
+        description: 'Selector for GPU node affinity. Format { "key": "label_name", "value": "label_value" }'
+        type: map
+        default: { "key": "accelerators/gpu", "value": "true" }
+      edgetpu_selector:
+        description: 'Selector for EdgeTPU node affinity. Format { "key": "label_name", "value": "label_value" }'
+        type: map
+        default: { "key": "accelerators/edgetpu", "value": "true" }
+      cpus:  
+        required: False 
+        type: integer
+        default: 0
+      gpus:  
+        required: False 
+        type: integer
+        default: 0
+      edgetpus:  
+        required: False 
+        type: integer
+        default: 0
+      arm64_cpus:  
+        required: False 
+        type: integer
+        default: 0
+      amd64_cpus:  
+        required: False 
+        type: integer
+        default: 0
+      ready_status:
+        type: boolean
+        default: False
+        description: Node is ready for deployment
 
 topology_template:
 
@@ -38,7 +80,7 @@ topology_template:
 {% if pods_info | length  %}
 {% for pod in pods_info.resources | default([]) %}
     pod-{{ pod.metadata.name | replace(" ","_") }}: 
-      type: sodalite.nodes.Kubernetes.{{ namespace }}.Pod
+      type: sodalite.nodes.Kubernetes.Pod
       properties:
         name: {{ pod.metadata.name }}
         namespace: {{ pod.metadata.namespace }}
@@ -48,7 +90,7 @@ topology_template:
 {% if nodes_info | length  %}
 {% for node in nodes_info.resources | default([]) %}
     node-{{ node.metadata.name | replace(" ","_") }}: 
-      type: sodalite.nodes.Kubernetes.{{ namespace }}.Node
+      type: sodalite.nodes.Kubernetes.Node
       properties:
         name: {{ node.metadata.name }}
 {% if node.metadata.annotations  %}
@@ -57,7 +99,28 @@ topology_template:
 {% endif %}
 {% if node.metadata.labels  %}
         labels:
-{{ node.metadata.labels | to_nice_yaml(indent=2) | indent(width=10, indentfirst=True) }}
+{{ node.metadata.labels | to_nice_yaml(indent=2) | indent(width=10, indentfirst=True) -}}
 {% endif %}
+{% for condition in node.status.conditions | default([]) %}
+{% if condition.type == "Ready"  %}
+        ready_status: {{ condition.status == "True" }}
+{% endif %}
+{% endfor %}
+{% for label, value in node.metadata.labels.items() | default({}) %}
+{% if (label == "accelerators/ncs2" or label == "accelerators/edgetpu") and value == "true" %}
+        edgetpus: 1
+        edgetpu_selector: { "key": "{{ label }}", "value": "{{ value }}" }
+{% elif (label == "accelerators/gpu" and value == "true") %}
+        gpus: 1
+        gpu_selector: { "key": "{{ label }}", "value": "{{ value }}" }
+{% elif (label == "beta.kubernetes.io/arch" and value == "amd64") %}
+        cpus: 1
+        amd64_cpus: 1
+{% elif (label == "beta.kubernetes.io/arch" and value == "arm64") %}
+        cpus: 1
+        arm64_cpus: 1
+{% endif %}
+{% endfor %}
+
 {% endfor %}
 {% endif %}
