@@ -3,7 +3,8 @@ info:
   version: 0.1.0
   title: Platform Discovery Service API
   license:
-    name: Apache-2.0
+    name: "Apache 2.0"
+    url: "http://www.apache.org/licenses/LICENSE-2.0.html"
 paths:
   /discover:
     post:
