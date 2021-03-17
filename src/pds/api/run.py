@@ -74,6 +74,7 @@ def get_app():
         logger.info("OIDC_INTROSPECTION_ENDPOINT {}".format(app.app.config["OIDC_INTROSPECTION_ENDPOINT"]))
     logger.info("VAULT_LOGIN_URI {}".format(app.app.config["VAULT_LOGIN_URI"]))
     logger.info("VAULT_SECRET_URI {}".format(app.app.config["VAULT_SECRET_URI"]))
+    logger.info("SEMANTIC_REASONER_UPDATE_URI {}".format(app.app.config["SEMANTIC_REASONER_UPDATE_URI"]))
 
     return app
 

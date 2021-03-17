@@ -16,9 +16,10 @@ docker-registry-cert-organization-name: ${docker_registry_cert_organization_name
 docker-registry-cert-email-address: ${docker_registry_cert_email_address}
 # PDS SETTINGS
 pds_env:
-  SECRET_VAULT_LOGIN_URI: ${VAULT_URI}/auth/jwt/login
-  SECRET_VAULT_URI: ${VAULT_URI}
+  SECRET_VAULT_LOGIN_URI: ${VAULT_URI}/v1/auth/jwt/login
+  SECRET_VAULT_URI: ${VAULT_URI}/v1/
   OIDC_INTROSPECTION_ENDPOINT: ${KEYCLOAK_URI}/auth/realms/SODALITE/protocol/openid-connect/token/introspect
   OIDC_CLIENT_SECRET: $KEYCLOAK_CLIENT_SECRET
   SEMANTIC_REASONER_UPDATE_URI: ${REASONER_URI}/reasoner-api/v0.6/saveTOSCA
+  AUTH_API_KEY: ${AUTH_API_KEY}
   

@@ -28,10 +28,11 @@ pipeline {
             KEYCLOAK_URI = credentials('keycloak-url')
             KEYCLOAK_CLIENT_ID = credentials('keycloak-client-id')
             KEYCLOAK_CLIENT_SECRET = credentials('keycloak-client-secret')
+            AUTH_API_KEY = credentials('auth-api-key')
             // VAULT settings
             VAULT_URI = credentials('vault-url')
             // KB settings
-            REASONER_URI =  "http://192.168.2.34:8080" //credentials('reasoner-url')
+            REASONER_URI = credentials('reasoner-url')
             // OPENSTACK DEPLOYMENT FALLBACK SETTINGS
             OS_PROJECT_DOMAIN_NAME = "Default"
             OS_USER_DOMAIN_NAME = "Default"
