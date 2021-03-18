@@ -29,6 +29,9 @@ def save_tosca(tosca, namespace, access_token):
                                  headers=headers,
                                  verify=True)
 
-        return json.loads(response.text), response.status_code
+        if response.ok:
+            return json.loads(response.text), response.status_code
+        else:
+            return response.text, response.status_code
     except ConnectionError:
         return f"Reasoner connection error to {reasoner_update_uri}", 500

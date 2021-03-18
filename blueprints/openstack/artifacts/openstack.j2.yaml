@@ -1,7 +1,7 @@
 tosca_definitions_version: tosca_simple_yaml_1_3 
 
 data_types: 
-  sodalite.datatypes.OpenStack.{{ namespace }}.SecurityRule:  
+  sodalite.datatypes.OpenStack.SecurityRule:  
     derived_from: tosca.datatypes.Root 
     properties:  
       protocol:  
@@ -23,7 +23,7 @@ data_types:
 
 node_types:
 
-  sodalite.nodes.OpenStack.{{ namespace }}.SecurityRules:  
+  sodalite.nodes.OpenStack.SecurityRules:  
     derived_from: tosca.nodes.Root 
     properties:  
       group_name:  
@@ -36,14 +36,14 @@ node_types:
           - min_length: 1 
         type: map 
         entry_schema:  
-          type: sodalite.datatypes.OpenStack.{{ namespace }}.SecurityRule 
+          type: sodalite.datatypes.OpenStack.SecurityRule 
       group_description:  
         description: Description of the security group in openstack. 
         required: False 
         type: string 
         default: ''
 
-  sodalite.nodes.OpenStack.{{ namespace }}.Flavor:
+  sodalite.nodes.OpenStack.Flavor:
     derived_from: tosca.nodes.Root
     properties:
       id:
@@ -71,7 +71,7 @@ node_types:
         required: True
         default: 0
 
-  sodalite.nodes.OpenStack.{{ namespace }}.Image:
+  sodalite.nodes.OpenStack.Image:
     derived_from: tosca.nodes.Root
     properties:
       id:
@@ -103,7 +103,7 @@ node_types:
         description: OpenStack image min RAM requirements
         default: 0           
 
-  sodalite.nodes.OpenStack.{{ namespace }}.Network:
+  sodalite.nodes.OpenStack.Network:
     derived_from: tosca.nodes.Root
     properties:
       name:
@@ -116,7 +116,7 @@ node_types:
       network:  
         type: tosca.capabilities.Network 
 
-  sodalite.nodes.OpenStack.{{ namespace }}.KeyPair:
+  sodalite.nodes.OpenStack.KeyPair:
     derived_from: tosca.nodes.Root
     properties:
       name:
@@ -128,9 +128,15 @@ topology_template:
   node_templates:
 
 {% for security_group in os_security_groups.openstack_security_group %}
-{% if security_group.name != "default" %}
+{% set vars = {'ingress': false} %}
+{% for security_group_rule in security_group.security_group_rules %}
+{% if security_group_rule.direction == "ingress" %}
+{% if vars.update({'ingress': true}) %} {% endif %}
+{% endif %}
+{% endfor %}
+{% if security_group.name != "default" and vars.ingress == true %}
     security-rules-{{ security_group.name }}:  
-      type: sodalite.nodes.OpenStack.{{ namespace }}.SecurityRules 
+      type: sodalite.nodes.OpenStack.SecurityRules 
       properties:
         ports:
 {% for security_group_rule in security_group.security_group_rules %}
@@ -145,13 +151,15 @@ topology_template:
         group_name: {{ security_group.name }}
 {% if security_group.description|length %}
         group_description: {{ security_group.description }}
+{% else %}        
+        group_description: ''
 {% endif %}
 
 {% endif %}
 {% endfor %}
 {% for network in os_networks.openstack_networks %}
     network-{{ network.name | replace(" ","_") }}: 
-      type: sodalite.nodes.OpenStack.{{ namespace }}.Network
+      type: sodalite.nodes.OpenStack.Network
       properties:
         name: {{ network.name }}
         mtu: {{ network.mtu }}
@@ -159,14 +167,14 @@ topology_template:
 {% endfor %}
 {% for key_pair in os_key_pairs.openstack_key_pair %}
     key-pair-{{ key_pair.name | replace(" ","_") }}: 
-      type: sodalite.nodes.OpenStack.{{ namespace }}.KeyPair
+      type: sodalite.nodes.OpenStack.KeyPair
       properties:
         name: {{ key_pair.name }}
 
 {% endfor %}  
 {% for flavor in os_flavor_info.openstack_flavors %}
     flavor-{{ flavor.name | replace(" ","_") | replace(".","_") }}: 
-      type: sodalite.nodes.OpenStack.{{ namespace }}.Flavor
+      type: sodalite.nodes.OpenStack.Flavor
       properties:
         id: {{ flavor.id }}
         flavor_name: {{ flavor.name }}
@@ -176,9 +184,16 @@ topology_template:
         is_public: {{ flavor.is_public }}
 
 {% endfor %}  
+{% set image_names = dict() %}
 {% for image in os_image_info.openstack_image %}
-    image-{{ image.name | replace(" ","_") | replace(".","_") }}: 
-      type: sodalite.nodes.OpenStack.{{ namespace }}.Image
+{% if image.name in image_names %}
+{% set image_name = image.name + image.id %}
+{% else %}
+{% set image_name = image.name %}
+{% endif %}
+{% set _ = image_names.update({image.name: image}) %}
+    image-{{ image_name | replace(" ","_") | replace(".","_") }}: 
+      type: sodalite.nodes.OpenStack.Image
       properties:
         id: {{ image.id }}
         image_name: {{ image.name }}
