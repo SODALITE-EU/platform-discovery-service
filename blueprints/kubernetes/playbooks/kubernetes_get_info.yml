@@ -1,24 +1,64 @@
 - hosts: all
   gather_facts: no
+  vars:
+    ansible_python_interpreter: "/usr/bin/env python3"
+
   tasks:
-    - name: "Get pods"
-      community.kubernetes.k8s_info:
-        kubeconfig: "{{ kube_config }}"
-        namespace: "{{ kube_namespace }}"
-        kind: Pod
-      register: pods_list
-      when: kube_kind == "Pod" or kube_kind == ""
 
-    - name: "Get nodes"
-      community.kubernetes.k8s_info:
-        kubeconfig: "{{ kube_config }}"
-        namespace: "{{ kube_namespace }}"
-        kind: Node
-      register: nodes_list
-      when: kube_kind == "Node" or kube_kind == ""
+    - name: "Executing kube info"
+      block:
 
-    - name: Set attributes
-      set_stats:
-        data:
-          pods_info: "{{ pods_list if pods_list is defined else '' }}"     
-          nodes_info: "{{ nodes_list if nodes_list is defined else '' }}"
+        - name: "Create kubeconfig from raw data"
+          block:
+            - name: Create temporary file
+              ansible.builtin.tempfile:
+                state: file
+                prefix: kube.
+                suffix: .config
+              register: tmp_kube_config
+
+            - set_fact:
+                tmp_kube_config_path: "{{ tmp_kube_config.path }}"
+
+            - name: Copy using inline content
+              ansible.builtin.copy:
+                content: "{{ kube_config_raw }}"
+                dest: "{{ tmp_kube_config_path }}"
+
+          when: kube_config_raw != ""
+
+        - name: "Save kube_config_path"
+          set_fact:
+            kube_config_path: "{{ tmp_kube_config_path if tmp_kube_config_path is defined else kube_config }}"
+
+        - name: "Get pods"
+          community.kubernetes.k8s_info:
+            namespace: "{{ kube_namespace }}"
+            kind: Pod
+          environment:
+            K8S_AUTH_KUBECONFIG: "{{ kube_config_path }}"
+          register: pods_list
+          when: kube_kind == "Pod" or kube_kind == ""
+
+        - name: "Get nodes"
+          community.kubernetes.k8s_info:
+            namespace: "{{ kube_namespace }}"
+            kind: Node
+          environment:
+            K8S_AUTH_KUBECONFIG: "{{ kube_config_path }}"
+          register: nodes_list
+          when: kube_kind == "Node" or kube_kind == ""
+
+        - name: Set attributes
+          set_stats:
+            data:
+              pods_info: "{{ pods_list if pods_list is defined else '' }}"     
+              nodes_info: "{{ nodes_list if nodes_list is defined else '' }}"
+
+      always:
+
+        - name: Remove the temporary kubeconfig
+          ansible.builtin.file:
+            path: "{{ tmp_kube_config.path }}"
+            state: absent
+          when: tmp_kube_config.path is defined

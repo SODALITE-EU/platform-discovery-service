@@ -1,11 +1,23 @@
 tosca_definitions_version: tosca_simple_yaml_1_3 
 
 node_types:
+
+  sodalite.nodes.edge.kubernetes.frontend: 
+    description: >
+      torque wm, here we can define properties/attributes applicable for torque WM
+    derived_from: tosca.nodes.Compute
+    attributes:
+      username:
+        type: string
+        default: ""
   
   sodalite.nodes.edge.kubernetes.info: 
     derived_from: tosca.nodes.Root
     properties:
       kube_config:
+        type: string 
+        default: ""
+      kube_config_raw:
         type: string 
         default: ""
       kube_namespace:
@@ -20,14 +32,21 @@ node_types:
         default: ""       
       nodes_info:
         type: string    
-        default: ""         
+        default: ""     
+    requirements:
+      - host:
+          node: sodalite.nodes.edge.kubernetes.frontend
+          capability: tosca.capabilities.Compute
+          relationship: tosca.relationships.HostedOn      
     interfaces:
         Standard:
           type: tosca.interfaces.node.lifecycle.Standard
           operations:
             create:
               inputs:
+                ansible_user: { type: string, default: { get_attribute: [SELF, host, username] } }  
                 kube_config: { type: string, default: { get_property: [SELF, kube_config] } }
+                kube_config_raw: { type: string, default: { get_property: [SELF, kube_config_raw] } }
                 kube_namespace: { type: string, default: { get_property: [SELF, kube_namespace] } }
                 kube_kind: { type: string, default: { get_property: [SELF, kube_kind] } }
               implementation: 
@@ -68,6 +87,9 @@ topology_template:
       type: string  
     kube_config:
       type: string 
+      default: ""  
+    kube_config_raw:
+      type: string 
       default: ""
     kube_namespace:
       type: string 
@@ -75,17 +97,31 @@ topology_template:
     kube_kind:
       type: string 
       default: ""
+    frontend_address:
+      type: string
+      default: ""
+    frontend_user:
+      type: string
+      default: ""
 
   node_templates:
+
+    edge-kubernetes-frontend:
+      type: sodalite.nodes.edge.kubernetes.frontend
+      attributes: 
+        public_address: { get_input: frontend_address }    
+        username: { get_input: frontend_user }    
 
     edge-kubernetes-info:
       type: sodalite.nodes.edge.kubernetes.info   
       properties: 
         kube_config: { get_input: kube_config }    
+        kube_config_raw: { get_input: kube_config_raw }    
         kube_namespace: { get_input: kube_namespace }    
         kube_kind: { get_input: kube_kind }    
+      requirements:
+        - host: edge-kubernetes-frontend
  
-
     edge-kubernetes-transform:
       type: sodalite.nodes.edge.kubernetes.transform
       properties:
