@@ -22,6 +22,12 @@ COPY --from=builder /build/src/ /app/
 COPY /blueprints /blueprints
 ENV PDS_BLUEPRINT_PATH="/blueprints"
 
+# install standard ansible collections
+COPY requirements.yml .
+RUN ansible-galaxy install -r requirements.yml \
+    && rm requirements.yml
+
+# install custom ansible collections
 COPY /src/ansible_collections /ansible_collections
 
 WORKDIR /ansible_collections/sodalite/discovery/

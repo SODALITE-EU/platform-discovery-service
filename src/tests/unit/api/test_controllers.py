@@ -12,9 +12,9 @@ class TestControllers:
                         {
                             "frontend-address": "14.15.11.12",
                             "user": "alexander",
-                            "namespace": "TestSlurm",
                             "_storage_key": "STORAGE_KEY"
                         },
+                        "namespace": "TestSlurm",
                         "platform_type": "slurm"
                     }
         return inputs
@@ -24,13 +24,16 @@ class TestControllers:
             request = mocker.patch("connexion.request")
             request.is_json = True
             mocker.patch("pds.api.controllers.default.opera_deploy")
-            mocker.patch("pds.api.controllers.default.opera_outputs")
+            mocker.patch("pds.api.controllers.default.opera_outputs",
+                         return_value={"output": {"value": "test"}})
             mocker.patch("pds.api.storages.safe_storage.SafeStorage.create")
             mocker.patch("os.chdir")
-            mocker.patch("pds.api.controllers.security.get_access_token", return_value="TEST_TOKEN")
+            mocker.patch("pds.api.controllers.security.get_access_token",
+                         return_value="TEST_TOKEN")
             mocker.patch("pds.api.utils.inputs.preprocess_inputs")
             flask_app.app.config['OIDC_INTROSPECTION_ENDPOINT'] = ""
-            mocker.patch("connexion.request.get_json", return_value=discovery_input)
+            mocker.patch("connexion.request.get_json",
+                         return_value=discovery_input)
             result = discover()
             assert result[1] == 200
 

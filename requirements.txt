@@ -12,3 +12,4 @@ pytest-mock
 twine
 setuptools
 openshift
+openstacksdk==0.52.0

@@ -16,6 +16,7 @@ def check_api_key(apikey, required_scopes=None):
 
     return {'scope': ['apiKey']}
 
+
 def token_info(access_token) -> dict:
     request = {'token': access_token}
     headers = {'Content-type': 'application/x-www-form-urlencoded'}
@@ -55,4 +56,3 @@ def get_access_token(request):
     if auth_type.lower() != "bearer":
         return None
     return token
-

@@ -89,5 +89,5 @@ topology_template:
                 
 
   outputs:
-    output-slurm-tosca:      
+    output-openstack-tosca:      
       value: { get_attribute: [ cloud-openstack-transform, transformation_result ] }        

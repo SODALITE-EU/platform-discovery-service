@@ -44,6 +44,45 @@ paths:
             application/json:
               schema:
                 type: string  
+  /update:
+    post:
+      security:
+        - apiKey: [ ]      
+        - oauth2: [email] 
+      summary: Automatic discovery and update resource database. 
+      operationId: discover_update
+      requestBody:
+        description: Endpoint information and access credentials.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DiscoveryInput"
+      responses:
+        202:
+          description: The discovery was successful.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DiscoveryOutput"
+        400:
+          description: Malformed discovery request.
+          content:
+            application/json:
+              schema:
+                type: string                  
+        401:
+          description: Unauthorized request for discovery.
+          content:
+            application/json:
+              schema:
+                type: string                   
+        500:
+          description: There was an error during discovery.
+          content:
+            application/json:
+              schema:
+                type: string                  
        
  
 components:
@@ -53,10 +92,13 @@ components:
       type: object
       required:
         - inputs
+        - namespace
         - platform_type
       properties:
         inputs:
           type: object
+        namespace:
+          type: string          
         platform_type:
           $ref: "#/components/schemas/PlatformType"
     DiscoveryOutput:
