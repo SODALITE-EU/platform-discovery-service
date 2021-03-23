@@ -1,5 +1,4 @@
 import requests
-import json
 from flask import current_app
 from pds.api.log import get_logger
 
@@ -12,26 +11,24 @@ session.mount('https://', adapter)
 logger = get_logger(__name__)
 
 
-def save_tosca(tosca, namespace, access_token):
+def save_tosca(tosca, namespace, access_token, aadm_uri, rm_uri):
     logger.info("Saving TOSCA into KB")
-    # if access_token:
-    #     headers = {"Authorization": f"Bearer {access_token}"}
-    # else:
-    headers = None
+    if access_token:
+        headers = {"Authorization": f"Bearer {access_token}"}
+    else:
+        headers = None
 
     reasoner_update_uri = current_app.config['SEMANTIC_REASONER_UPDATE_URI']
 
-    data = {"modelTOSCA": tosca, "namespace": namespace}
+    data = {
+        "modelTOSCA": tosca,
+        "rmNamespace": namespace,
+        "aadmNamespace": namespace,
+        "rmURI": rm_uri,
+        "aadmURI": aadm_uri
+        }
 
-    try:
-        response = requests.post(reasoner_update_uri,
-                                 data=data,
-                                 headers=headers,
-                                 verify=True)
-
-        if response.ok:
-            return json.loads(response.text), response.status_code
-        else:
-            return response.text, response.status_code
-    except ConnectionError:
-        return f"Reasoner connection error to {reasoner_update_uri}", 500
+    return requests.post(reasoner_update_uri,
+                         data=data,
+                         headers=headers,
+                         verify=True)

@@ -2,13 +2,15 @@ import connexion
 import os
 import datetime
 import pds.api.utils.templates as templates
-import yaml
+import json
 
 from opera.commands.deploy import deploy_service_template as opera_deploy
 from opera.commands.outputs import outputs as opera_outputs
 
 from pds.api.openapi.models.discovery_input import DiscoveryInput
 from pds.api.openapi.models.discovery_output import DiscoveryOutput
+from pds.api.openapi.models.update_input import UpdateInput
+from pds.api.openapi.models.update_output import UpdateOutput
 from pds.api.controllers.security import get_access_token
 from pds.api.log import get_logger, debug_enabled
 from pds.api.storages.memory_storage import SafeMemoryStorage
@@ -37,9 +39,11 @@ def discover(body: DiscoveryInput = None):
             connexion.request.get_json()
             )
     else:
-        return {"Incorrect input"}, 500
+        return {"Incorrect input"}, 400
     try:
-        return_value = _discover(discovery_input)
+        return_value = _discover(discovery_input.inputs,
+                                 discovery_input.namespace,
+                                 discovery_input.platform_type)
     except Exception as ex:
         logger.exception("An error occurred during discovery process")
         return {"message": str(ex)}, 500
@@ -47,41 +51,55 @@ def discover(body: DiscoveryInput = None):
     return DiscoveryOutput(now.isoformat(), return_value), 200
 
 
-def discover_update(body: DiscoveryInput = None):
-    """Automatic discovery and modeling of infrastructural resources.
+def discover_update(body: UpdateInput = None):
+    """Automatic discovery and update resource database.
 
      # noqa: E501
 
-    :param discovery_input: Endpoint information and access credentials.
-    :type discovery_input: dict | bytes
+    :param update_input: Endpoint information and access credentials.
+    :type update_input: dict | bytes
 
-    :rtype: DiscoveryOutput
+    :rtype: UpdateOutput
     """
     logger.debug("Entry: update")
     logger.debug(body)
 
     if connexion.request.is_json:
-        discovery_input = DiscoveryInput.from_dict(
+        update_input = UpdateInput.from_dict(
             connexion.request.get_json()
             )
     else:
-        return {"Incorrect input"}, 500
+        return {"Incorrect input"}, 400
 
     try:
-        discovery_result = _discover(discovery_input)
+        discovery_result = _discover(update_input.inputs,
+                                     update_input.namespace,
+                                     update_input.platform_type)
     except Exception as ex:
         logger.exception("An error occurred during discovery process")
         return {"message": str(ex)}, 500
     access_token = get_access_token(connexion.request)
-    return save_tosca(discovery_result,
-                      discovery_input.namespace,
-                      access_token)
+
+    try:
+        save_response = save_tosca(discovery_result,
+                                   update_input.namespace,
+                                   access_token,
+                                   update_input.aadm_uri,
+                                   update_input.rm_uri)
+        if save_response.ok:
+            result = json.loads(save_response.text)
+            return UpdateOutput(result.get("aadmuri"), result.get("rmuri")), 200
+        else:
+            return save_response.text, save_response.status_code
+
+    except ConnectionError:
+        return "Reasoner connection error to Semantic reasoner", 500
 
 
-def _discover(discovery_input):
+def _discover(inputs, namespace, platform_type):
     default_path = os.getcwd()
     path, template = templates.get_service_template(
-        discovery_input.platform_type
+        platform_type
         )
 
     environment = DeploymentEnvironment()
@@ -90,9 +108,9 @@ def _discover(discovery_input):
         # TODO: Disable verbose mode universally
         access_token = get_access_token(connexion.request)
         refined_inputs, ssh_keys, storage_key = \
-            preprocess_inputs(discovery_input.inputs,
+            preprocess_inputs(inputs,
                               access_token,
-                              discovery_input.namespace)
+                              namespace)
         environment.setup(ssh_keys)
 
         safe_storage = SafeMemoryStorage.create()

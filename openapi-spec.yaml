@@ -20,7 +20,7 @@ paths:
             schema:
               $ref: "#/components/schemas/DiscoveryInput"
       responses:
-        202:
+        200:
           description: The discovery was successful.
           content:
             application/json:
@@ -57,28 +57,28 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/DiscoveryInput"
+              $ref: "#/components/schemas/UpdateInput"
       responses:
-        202:
-          description: The discovery was successful.
+        200:
+          description: The update was successful.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/DiscoveryOutput"
+                $ref: "#/components/schemas/UpdateOutput"
         400:
-          description: Malformed discovery request.
+          description: Malformed update request.
           content:
             application/json:
               schema:
                 type: string                  
         401:
-          description: Unauthorized request for discovery.
+          description: Unauthorized request for update.
           content:
             application/json:
               schema:
                 type: string                   
         500:
-          description: There was an error during discovery.
+          description: There was an error during update.
           content:
             application/json:
               schema:
@@ -98,11 +98,12 @@ components:
         inputs:
           type: object
         namespace:
+          description: The namespace name in which resource and application models will be saved.
           type: string          
         platform_type:
           $ref: "#/components/schemas/PlatformType"
     DiscoveryOutput:
-      description: An invocation of the deployment.
+      description: Result of discovery.
       type: object
       required:
         - timestamp
@@ -121,7 +122,38 @@ components:
         - torque
         - openstack
         - aws          
-        - kubernetes          
+        - kubernetes       
+    UpdateInput:
+      description: Endpoint information and access credentials provided as inputs.
+      type: object
+      required:
+        - inputs
+        - namespace
+        - platform_type
+      properties:
+        inputs:
+          type: object
+        namespace:
+          description: The namespace name in which resource and application models will be saved.
+          type: string          
+        aadm_uri:
+          description: AADM URI to update (optional).
+          type: string
+        rm_uri:
+          description: RM URI to update (optional).
+          type: string          
+        platform_type:
+          $ref: "#/components/schemas/PlatformType"
+    UpdateOutput:
+      description: An invocation of the deployment.
+      type: object
+      properties:
+        aadm_uri:
+          description: AADM URI that stores updated info.
+          type: string
+        rm_uri:
+          description: RM URI that stores updated info.
+          type: string
 
   securitySchemes:
     apiKey:
