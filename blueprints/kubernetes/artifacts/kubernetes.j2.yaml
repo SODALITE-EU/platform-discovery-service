@@ -40,16 +40,6 @@ node_types:
         required: False 
         type: map
         default: {}
-      gpu_selector:
-        description: 'Selector for GPU node affinity. Format { "key": "label_name", "value": "label_value" }'
-        type: map
-        default: { "key": "accelerators/gpu", "value": "true" }
-        required: False
-      edgetpu_selector:
-        description: 'Selector for EdgeTPU node affinity. Format { "key": "label_name", "value": "label_value" }'
-        type: map
-        default: { "key": "accelerators/edgetpu", "value": "true" }
-        required: False
       cpus:  
         required: False 
         type: integer
@@ -95,14 +85,6 @@ topology_template:
       type: sodalite.nodes.Kubernetes.Node
       properties:
         name: {{ node.metadata.name }}
-{% if node.metadata.annotations  %}
-        annotations:
-{{ node.metadata.annotations | to_nice_yaml(indent=2) | indent(width=10, indentfirst=True) -}}
-{% endif %}
-{% if node.metadata.labels  %}
-        labels:
-{{ node.metadata.labels | to_nice_yaml(indent=2) | indent(width=10, indentfirst=True) -}}
-{% endif %}
 {% for condition in node.status.conditions | default([]) %}
 {% if condition.type == "Ready"  %}
         ready_status: {{ condition.status == "True" }}
@@ -111,10 +93,8 @@ topology_template:
 {% for label, value in node.metadata.labels.items() | default({}) %}
 {% if (label == "accelerators/edgetpu") and value == "true" %}
         edgetpus: 1
-        edgetpu_selector: { "key": "{{ label }}", "value": "{{ value }}" }
 {% elif (label == "accelerators/gpu" and value == "true") %}
         gpus: 1
-        gpu_selector: { "key": "{{ label }}", "value": "{{ value }}" }
 {% elif (label == "beta.kubernetes.io/arch" and value == "amd64") %}
         cpus: 1
         amd64_cpus: 1
