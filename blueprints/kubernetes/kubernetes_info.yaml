@@ -58,6 +58,9 @@ node_types:
     properties:
       namespace:
         type: string 
+      kube_node_label_monitoring_payload:
+        type: map 
+        default: {}
     attributes:
       transformation_result:
         type: string    
@@ -73,6 +76,7 @@ node_types:
             create:
               inputs:
                 namespace: { type: string, default: { get_property: [SELF, namespace] } }
+                payload: { type: map, default: { get_property: [SELF, kube_node_label_monitoring_payload] } }
                 pods_info: { type: string, default: { get_attribute: [SELF, info, pods_info] } }
                 nodes_info: { type: string, default: { get_attribute: [SELF, info, nodes_info] } }
               implementation: 
@@ -85,24 +89,28 @@ topology_template:
   inputs:
     namespace:
       type: string  
+      default: "" 
     kube_config:
       type: string 
-      default: ""  
+      default: "~/.kube/config"  
     kube_config_raw:
       type: string 
       default: ""
     kube_namespace:
       type: string 
-      default: ""
+      default: "default"
     kube_kind:
       type: string 
-      default: ""
+      default: "Node"
     frontend_address:
       type: string
-      default: ""
+      default: "192.168.2.56"
     frontend_user:
       type: string
-      default: ""
+      default: "centos"
+    payload:
+      type: map
+      default: {}
 
   node_templates:
 
@@ -126,6 +134,7 @@ topology_template:
       type: sodalite.nodes.edge.kubernetes.transform
       properties:
         namespace: { get_input: namespace }
+        kube_node_label_monitoring_payload: { get_input: payload }
       requirements:
         - info: edge-kubernetes-info 
                 

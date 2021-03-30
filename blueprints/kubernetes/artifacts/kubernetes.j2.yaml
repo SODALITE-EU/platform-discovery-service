@@ -8,19 +8,6 @@ node_types:
   sodalite.nodes.Kubernetes.Kind:
     derived_from: tosca.nodes.SoftwareComponent
 
-  # TODO: Full support is yet to be provided, currently output names
-  sodalite.nodes.Kubernetes.Pod:  
-    derived_from: tosca.nodes.Root 
-    properties:  
-      name:  
-        description: Name of the pod
-        required: True 
-        type: string
-      namespace:
-        description: Kubernetes namespace
-        required: True
-        type: string
-
   sodalite.nodes.Kubernetes.Node:  
     derived_from: tosca.nodes.Compute
     capabilities:
@@ -32,14 +19,6 @@ node_types:
         description: Name of the node
         required: True 
         type: string 
-      annotations:  
-        required: False 
-        type: map
-        default: {}
-      labels:  
-        required: False 
-        type: map
-        default: {}
       cpus:  
         required: False 
         type: integer
@@ -69,20 +48,56 @@ topology_template:
 
   node_templates:
 
-{% if pods_info | length  %}
-{% for pod in pods_info.resources | default([]) %}
-    pod-{{ pod.metadata.name | replace(" ","_") }}: 
-      type: sodalite.nodes.Kubernetes.Pod
+{% if payload | length and nodes_info | length %}
+
+
+{% for node in nodes_info.resources | default([]) %}
+{% if node.metadata.name == payload.node %}
+
+    node-{{ node.metadata.name | replace(" ","_") }}: 
+      type: kube/sodalite.nodes.Kubernetes.Node
       properties:
-        name: {{ pod.metadata.name }}
-        namespace: {{ pod.metadata.namespace }}
+        name: {{ node.metadata.name }}
+{% for condition in node.status.conditions | default([]) %}
+{% if condition.type == "Ready"  %}
+        ready_status: {{ condition.status == "True" }}
+{% endif %}
 {% endfor %}
+
+{% for label, value in node.metadata.labels.items() | default({}) %}
+{% if (label == "beta.kubernetes.io/arch" and value == "amd64") %}
+        cpus: 1
+        amd64_cpus: 1
+{% elif (label == "beta.kubernetes.io/arch" and value == "arm64") %}
+        cpus: 1
+        arm64_cpus: 1
+{% endif %}
+{% endfor %}
+
+{% if (payload.labelsAdded["accelerators/edgetpu"] is defined and payload.labelsAdded["accelerators/edgetpu"] == "true")
+      or 
+      (payload.labelsUpdated["accelerators/edgetpu"] is defined and payload.labelsUpdated["accelerators/edgetpu"] == "true") %}
+        edgetpus: 1
+{% elif "accelerators/edgetpu" in payload.labelsDeleted %}
+        edgetpus: 0
 {% endif %}
 
-{% if nodes_info | length  %}
+{% if (payload.labelsAdded["accelerators/gpu"] is defined and payload.labelsAdded["accelerators/gpu"] == "true")
+      or 
+      (payload.labelsUpdated["accelerators/gpu"] is defined and payload.labelsUpdated["accelerators/gpu"] == "true") %}
+        gpus: 1
+{% elif "accelerators/gpu" in payload.labelsDeleted %}
+        gpus: 0
+{% endif %}
+
+{% endif%}
+{% endfor %}
+
+
+{% elif nodes_info | length  %}
 {% for node in nodes_info.resources | default([]) %}
     node-{{ node.metadata.name | replace(" ","_") }}: 
-      type: sodalite.nodes.Kubernetes.Node
+      type: kube/sodalite.nodes.Kubernetes.Node
       properties:
         name: {{ node.metadata.name }}
 {% for condition in node.status.conditions | default([]) %}
