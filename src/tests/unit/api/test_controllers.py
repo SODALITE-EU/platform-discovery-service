@@ -1,6 +1,6 @@
 import pytest
 
-from pds.api.controllers.default import discover 
+from pds.api.controllers.default import discover, subscribe 
 from pds.api.controllers.security import token_info, validate_scope, get_access_token
 
 
@@ -18,6 +18,17 @@ class TestControllers:
                         "platform_type": "slurm"
                     }
         return inputs
+
+    @pytest.fixture
+    def subscription_test_inputs(self):
+        return {
+            "invalid_endpoint": {
+                "endpoint": "http://some - host . de:7777/abc"
+            },
+            "valid_endpoint": {
+                "endpoint": "http://some-host.de:7777/abc"
+            }
+        }
 
     def test_discovery(self, mocker, flask_app, discovery_input):
         with flask_app.app.test_request_context():
@@ -74,3 +85,22 @@ class TestControllers:
             assert result["scope"][0] == "uid"
             flask_app.app.config['OIDC_INTROSPECTION_ENDPOINT'] = "test_endpoint"
             result = token_info("ACCESS_TOKEN")
+
+    def test_subscription(self, mocker, flask_app, subscription_test_inputs):
+        with flask_app.app.test_request_context():
+            request = mocker.patch("connexion.request")
+            request.is_json = True
+            mocker.patch("pds.api.controllers.security.get_access_token",
+                         return_value="TEST_TOKEN")
+            flask_app.app.config['OIDC_INTROSPECTION_ENDPOINT'] = ""
+            inputs = subscription_test_inputs
+
+            mocker.patch("connexion.request.get_json",
+                         return_value=inputs["invalid_endpoint"])
+            result = subscribe()
+            assert result[1] == 400
+
+            mocker.patch("connexion.request.get_json",
+                         return_value=inputs["valid_endpoint"])
+            result = subscribe()
+            assert result[1] == 200

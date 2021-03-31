@@ -3,6 +3,8 @@ import os
 import datetime
 import pds.api.utils.templates as templates
 import json
+from validators import url as validate_endpoint
+from validators import ValidationFailure
 
 from opera.commands.deploy import deploy_service_template as opera_deploy
 from opera.commands.outputs import outputs as opera_outputs
@@ -11,12 +13,15 @@ from pds.api.openapi.models.discovery_input import DiscoveryInput
 from pds.api.openapi.models.discovery_output import DiscoveryOutput
 from pds.api.openapi.models.update_input import UpdateInput
 from pds.api.openapi.models.update_output import UpdateOutput
+from pds.api.openapi.models.subscription_input import SubscriptionInput
+from pds.api.openapi.models.subscription_output import SubscriptionOutput
 from pds.api.controllers.security import get_access_token
 from pds.api.log import get_logger, debug_enabled
 from pds.api.storages.memory_storage import SafeMemoryStorage
 from pds.api.utils.inputs import preprocess_inputs
 from pds.api.utils.reasoner_client import save_tosca
 from pds.api.utils.environment import DeploymentEnvironment
+from pds.api.utils.notifier import Notifier
 
 logger = get_logger(__name__)
 
@@ -88,6 +93,9 @@ def discover_update(body: UpdateInput = None):
                                    update_input.rm_uri)
         if save_response.ok:
             result = json.loads(save_response.text)
+            # TODO: notifications can be run in background
+            # TODO: handle failed subscribers
+            failed_subscribers = Notifier.notify_subscribers()
             return UpdateOutput(result.get("aadmuri"), result.get("rmuri")), 200
         else:
             return save_response.text, save_response.status_code
@@ -130,3 +138,30 @@ def _discover(inputs, namespace, platform_type):
         for error in errors:
             logger.warn("An error occurred during cleanup")
             logger.warn(error)
+
+def subscribe(body: SubscriptionInput = None):
+    """Subscription for receiving a notification about discovery and KB updates.
+
+     # noqa: E501
+
+    :param subscription_input: Subscription information.
+    :type subscription_input: dict | bytes
+
+    :rtype: SubscriptionOutput
+    """
+    logger.debug("Entry: subscribe")
+    logger.debug(body)
+
+    if connexion.request.is_json:
+        subscription_input = SubscriptionInput.from_dict(
+            connexion.request.get_json()
+            )
+    else:
+        return {"Incorrect input"}, 400
+
+    if isinstance(validate_endpoint(subscription_input.endpoint), ValidationFailure):
+        return {"Incorrect endpoint"}, 400
+
+    Notifier.add_subscriber(subscription_input)
+        
+    return SubscriptionOutput(True), 200

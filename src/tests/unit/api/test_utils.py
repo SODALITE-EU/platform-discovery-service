@@ -2,8 +2,11 @@ import pytest
 import pds.api.utils.templates as templates
 import pds.api.utils.inputs as inputs
 from unittest.mock import MagicMock
+from pds.api.utils.notifier import Notifier
 from pds.api.utils.environment import DeploymentEnvironment
 from pds.api.openapi.models.platform_type import PlatformType
+from pds.api.openapi.models.subscription_input import SubscriptionInput
+from requests import RequestException
 
 
 class TestUtils:
@@ -40,7 +43,14 @@ class TestUtils:
                 "namespace": "TestSlurm"
                 }
 
-        return inputs         
+        return inputs  
+
+    @pytest.fixture
+    def subscription_test_inputs(self):
+        return {
+            "only_endpoint": SubscriptionInput("http://some-host.de:7777/abc"),
+            "endpoint_with_payload": SubscriptionInput("http://some-host.de:6666/abc", { "some": "data" }),
+        }       
 
     def test_templates(self, flask_app):
         with flask_app.app.app_context():
@@ -119,3 +129,35 @@ class TestUtils:
             assert len(result[0]) == 3
             assert len(result[1]) == 0
             assert result[0]["namespace"] == "testNamespace"
+
+    def test_notifier_reset_subscribers(self, subscription_test_inputs):
+        Notifier.reset_subscribers()
+        assert len(Notifier.get_subscribers()) == 0
+
+    def test_notifier_add_subscriber(self, subscription_test_inputs):
+        inputs = subscription_test_inputs
+        Notifier.reset_subscribers()
+
+        Notifier.add_subscriber(inputs["only_endpoint"])
+        assert len(Notifier.get_subscribers()) == 1
+        Notifier.get_subscribers()[0].endpoint == inputs["only_endpoint"].endpoint
+
+        Notifier.add_subscriber(inputs["endpoint_with_payload"])
+        assert len(Notifier.get_subscribers()) == 2
+        Notifier.get_subscribers()[1].endpoint == inputs["endpoint_with_payload"].endpoint
+        Notifier.get_subscribers()[1].payload == inputs["endpoint_with_payload"].payload
+
+    def test_notifier_notify_subscribers(self, mocker, flask_app, subscription_test_inputs):
+        with flask_app.app.app_context():
+            flask_app.app.config['SUBSCRIBER_TIMEOUT'] = "5"
+            
+            inputs = subscription_test_inputs
+            Notifier.reset_subscribers()
+
+            Notifier.add_subscriber(inputs["only_endpoint"])
+            mocker.patch("requests.post")
+            assert len(Notifier.notify_subscribers()) == 0
+
+            Notifier.add_subscriber(inputs["endpoint_with_payload"])
+            mocker.patch("requests.post", side_effect=RequestException("Connection errors"))
+            assert len(Notifier.notify_subscribers()) == 2
