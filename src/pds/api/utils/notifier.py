@@ -6,8 +6,9 @@ from pds.api.openapi.models.subscription_input import SubscriptionInput
 
 logger = get_logger(__name__)
 
+
 class Notifier:
-    
+
     subscribers = []
 
     @classmethod
@@ -28,9 +29,9 @@ class Notifier:
         for subscriber in cls.subscribers:
             try:
                 requests.post(subscriber.endpoint,
-                             json=subscriber.payload,
-                             verify=True,
-                             timeout=int(current_app.config['SUBSCRIBER_TIMEOUT']))
+                              json=subscriber.payload,
+                              verify=True,
+                              timeout=int(current_app.config['SUBSCRIBER_TIMEOUT']))
             except (requests.RequestException, ConnectionError) as e:
                 logger.info("An error occurred during notifications of: {}".format(subscriber.endpoint))
                 failed_subscribers.append(subscriber)

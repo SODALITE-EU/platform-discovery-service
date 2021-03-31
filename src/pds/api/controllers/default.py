@@ -104,6 +104,34 @@ def discover_update(body: UpdateInput = None):
         return "Reasoner connection error to Semantic reasoner", 500
 
 
+def subscribe(body: SubscriptionInput = None):
+    """Subscription for receiving a notification about discovery and KB updates.
+
+     # noqa: E501
+
+    :param subscription_input: Subscription information.
+    :type subscription_input: dict | bytes
+
+    :rtype: SubscriptionOutput
+    """
+    logger.debug("Entry: subscribe")
+    logger.debug(body)
+
+    if connexion.request.is_json:
+        subscription_input = SubscriptionInput.from_dict(
+            connexion.request.get_json()
+            )
+    else:
+        return {"Incorrect input"}, 400
+
+    if isinstance(validate_endpoint(subscription_input.endpoint), ValidationFailure):
+        return {"Incorrect endpoint"}, 400
+
+    Notifier.add_subscriber(subscription_input)
+
+    return SubscriptionOutput(True), 200
+
+
 def _discover(inputs, namespace, platform_type):
     default_path = os.getcwd()
     path, template = templates.get_service_template(
@@ -138,30 +166,3 @@ def _discover(inputs, namespace, platform_type):
         for error in errors:
             logger.warn("An error occurred during cleanup")
             logger.warn(error)
-
-def subscribe(body: SubscriptionInput = None):
-    """Subscription for receiving a notification about discovery and KB updates.
-
-     # noqa: E501
-
-    :param subscription_input: Subscription information.
-    :type subscription_input: dict | bytes
-
-    :rtype: SubscriptionOutput
-    """
-    logger.debug("Entry: subscribe")
-    logger.debug(body)
-
-    if connexion.request.is_json:
-        subscription_input = SubscriptionInput.from_dict(
-            connexion.request.get_json()
-            )
-    else:
-        return {"Incorrect input"}, 400
-
-    if isinstance(validate_endpoint(subscription_input.endpoint), ValidationFailure):
-        return {"Incorrect endpoint"}, 400
-
-    Notifier.add_subscriber(subscription_input)
-        
-    return SubscriptionOutput(True), 200
