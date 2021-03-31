@@ -7,6 +7,7 @@ from pds.api.utils.environment import DeploymentEnvironment
 from pds.api.openapi.models.platform_type import PlatformType
 from pds.api.openapi.models.subscription_input import SubscriptionInput
 from requests import RequestException
+from requests import Response
 
 
 class TestUtils:
@@ -150,7 +151,7 @@ class TestUtils:
     def test_notifier_notify_subscribers(self, mocker, flask_app, subscription_test_inputs):
         with flask_app.app.app_context():
             flask_app.app.config['SUBSCRIBER_TIMEOUT'] = "5"
-            
+
             inputs = subscription_test_inputs
             Notifier.reset_subscribers()
 
@@ -160,4 +161,14 @@ class TestUtils:
 
             Notifier.add_subscriber(inputs["endpoint_with_payload"])
             mocker.patch("requests.post", side_effect=RequestException("Connection errors"))
+            assert len(Notifier.notify_subscribers()) == 2
+
+            response_404=Response()
+            response_404.status_code = 404
+            mocker.patch("requests.post", return_value=response_404)
+            assert len(Notifier.notify_subscribers()) == 2
+
+            response_503=Response()
+            response_503.status_code = 503
+            mocker.patch("requests.post", return_value=response_503)
             assert len(Notifier.notify_subscribers()) == 2

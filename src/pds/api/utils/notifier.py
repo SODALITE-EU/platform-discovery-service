@@ -28,10 +28,12 @@ class Notifier:
         failed_subscribers = []
         for subscriber in cls.subscribers:
             try:
-                requests.post(subscriber.endpoint,
+                response = requests.post(subscriber.endpoint,
                               json=subscriber.payload,
                               verify=True,
                               timeout=int(current_app.config['SUBSCRIBER_TIMEOUT']))
+                if not response.ok:
+                    raise requests.RequestException("Unsuccessful response code")
             except (requests.RequestException, ConnectionError) as e:
                 logger.info("An error occurred during notifications of: {}".format(subscriber.endpoint))
                 failed_subscribers.append(subscriber)
