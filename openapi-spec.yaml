@@ -83,6 +83,45 @@ paths:
           content:
             application/json:
               schema:
+                type: string      
+  /subscribe:
+    post:
+      security:
+        - apiKey: [ ]      
+        - oauth2: [email] 
+      summary: Subscription for receiving a notification about discovery and KB updates.
+      operationId: subscribe
+      requestBody:
+        description: Subscription information.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SubscriptionInput"
+      responses:
+        200:
+          description: The subscription was successful.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SubscriptionOutput"
+        400:
+          description: Malformed subscription request.
+          content:
+            application/json:
+              schema:
+                type: string                  
+        401:
+          description: Unauthorized request for subscription.
+          content:
+            application/json:
+              schema:
+                type: string                   
+        500:
+          description: There was an error during subscription.
+          content:
+            application/json:
+              schema:
                 type: string                  
        
  
@@ -155,6 +194,26 @@ components:
         rm_uri:
           description: RM URI that stores updated info.
           type: string
+    SubscriptionInput:
+      description: Data to register a notification when a discovery is performed
+      type: object
+      required:
+        - endpoint
+      properties:
+        endpoint:
+          description: An endpoint, where a notification will be sent to
+          type: string
+          format: uri
+        payload:
+          description: A payload, a notification will be sent along with
+          type: object
+    SubscriptionOutput:
+      description: Result of the subscription
+      type: object
+      properties:
+        success:
+          description: Subscription success information
+          type: boolean
 
   securitySchemes:
     apiKey:

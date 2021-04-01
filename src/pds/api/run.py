@@ -66,7 +66,8 @@ def get_app():
                                       "http://localhost:8200/v1/"),
         "AUTH_API_KEY": os.getenv("AUTH_API_KEY", ""),
         "SEMANTIC_REASONER_UPDATE_URI": os.getenv("SEMANTIC_REASONER_UPDATE_URI", 
-                                                  "http://localhost:8080/reasoner-api/v0.6/saveTOSCA"),                                    
+                                                  "http://localhost:8080/reasoner-api/v0.6/saveTOSCA"),   
+        "SUBSCRIBER_TIMEOUT": os.getenv("SUBSCRIBER_TIMEOUT", "5"),                                    
     })
     if app.app.config["OIDC_INTROSPECTION_ENDPOINT"] == "":
         logger.warn("Security alert. OIDC_INTROSPECTION_ENDPOINT in not configured.")
