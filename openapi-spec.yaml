@@ -198,8 +198,12 @@ components:
       description: Data to register a notification when a discovery is performed
       type: object
       required:
+        - namespace
         - endpoint
       properties:
+        namespace:
+          description: The namespace name to be subscribed to.
+          type: string 
         endpoint:
           description: An endpoint, where a notification will be sent to
           type: string

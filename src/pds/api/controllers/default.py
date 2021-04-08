@@ -95,7 +95,7 @@ def discover_update(body: UpdateInput = None):
             result = json.loads(save_response.text)
             # TODO: notifications can be run in background
             # TODO: handle failed subscribers
-            failed_subscribers = Notifier.notify_subscribers()
+            failed_subscribers = Notifier.notify_subscribers(update_input.namespace)
             return UpdateOutput(result.get("aadmuri"), result.get("rmuri")), 200
         else:
             return save_response.text, save_response.status_code

@@ -24,9 +24,11 @@ class Notifier:
         cls.subscribers.append(subscriber)
 
     @classmethod
-    def notify_subscribers(cls):
+    def notify_subscribers(cls, namespace: str):
         failed_subscribers = []
         for subscriber in cls.subscribers:
+            if namespace != subscriber.namespace:
+                continue
             try:
                 response = requests.post(subscriber.endpoint,
                               json=subscriber.payload,
