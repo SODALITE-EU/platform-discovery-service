@@ -24,6 +24,8 @@ def save_tosca(tosca, namespace, access_token, aadm_uri, rm_uri):
         "modelTOSCA": tosca,
         "rmNamespace": namespace,
         "aadmNamespace": namespace,
+        "rmName": "{0}.rm".format(namespace),
+        "aadmName": "{0}.aadm".format(namespace),
         "rmURI": rm_uri,
         "aadmURI": aadm_uri
         }
