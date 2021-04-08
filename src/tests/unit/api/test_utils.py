@@ -49,8 +49,9 @@ class TestUtils:
     @pytest.fixture
     def subscription_test_inputs(self):
         return {
-            "only_endpoint": SubscriptionInput("http://some-host.de:7777/abc"),
-            "endpoint_with_payload": SubscriptionInput("http://some-host.de:6666/abc", { "some": "data" }),
+            "only_endpoint": SubscriptionInput("namespace-1", "http://some-host.de:7777/abc"),
+            "endpoint_with_payload": SubscriptionInput("namespace-1","http://some-host.de:6666/abc", { "some": "data" }),
+            "different_namespace": SubscriptionInput("namespace-2","http://some-host.de:5555/abc"),
         }       
 
     def test_templates(self, flask_app):
@@ -141,12 +142,14 @@ class TestUtils:
 
         Notifier.add_subscriber(inputs["only_endpoint"])
         assert len(Notifier.get_subscribers()) == 1
-        Notifier.get_subscribers()[0].endpoint == inputs["only_endpoint"].endpoint
+        assert Notifier.get_subscribers()[0].namespace == inputs["only_endpoint"].namespace
+        assert Notifier.get_subscribers()[0].endpoint == inputs["only_endpoint"].endpoint
 
         Notifier.add_subscriber(inputs["endpoint_with_payload"])
         assert len(Notifier.get_subscribers()) == 2
-        Notifier.get_subscribers()[1].endpoint == inputs["endpoint_with_payload"].endpoint
-        Notifier.get_subscribers()[1].payload == inputs["endpoint_with_payload"].payload
+        assert Notifier.get_subscribers()[1].namespace == inputs["endpoint_with_payload"].namespace
+        assert Notifier.get_subscribers()[1].endpoint == inputs["endpoint_with_payload"].endpoint
+        assert Notifier.get_subscribers()[1].payload == inputs["endpoint_with_payload"].payload
 
     def test_notifier_notify_subscribers(self, mocker, flask_app, subscription_test_inputs):
         with flask_app.app.app_context():
@@ -157,18 +160,23 @@ class TestUtils:
 
             Notifier.add_subscriber(inputs["only_endpoint"])
             mocker.patch("requests.post")
-            assert len(Notifier.notify_subscribers()) == 0
+            assert len(Notifier.notify_subscribers("namespace-1")) == 0
 
             Notifier.add_subscriber(inputs["endpoint_with_payload"])
             mocker.patch("requests.post", side_effect=RequestException("Connection errors"))
-            assert len(Notifier.notify_subscribers()) == 2
+            assert len(Notifier.notify_subscribers("namespace-1")) == 2
 
             response_404=Response()
             response_404.status_code = 404
             mocker.patch("requests.post", return_value=response_404)
-            assert len(Notifier.notify_subscribers()) == 2
+            assert len(Notifier.notify_subscribers("namespace-1")) == 2
 
             response_503=Response()
             response_503.status_code = 503
             mocker.patch("requests.post", return_value=response_503)
-            assert len(Notifier.notify_subscribers()) == 2
+            assert len(Notifier.notify_subscribers("namespace-1")) == 2
+
+            Notifier.add_subscriber(inputs["different_namespace"])
+            mocker.patch("requests.post", side_effect=RequestException("Connection errors"))
+            # still 2 failed subscribers, since new subscriber is of different namespace
+            assert len(Notifier.notify_subscribers("namespace-1")) == 2
