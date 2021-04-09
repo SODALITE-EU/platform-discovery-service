@@ -185,7 +185,7 @@ pipeline {
                     python3 -m pip install --upgrade pip
                     python3 -m pip install opera==0.6.4 openstacksdk==0.52.0 docker
                     rm -r -f pds-openstack/modules/
-                    git clone -b 3.3.0 https://github.com/SODALITE-EU/iac-modules.git pds-openstack/modules/
+                    git clone -b 3.4.1 https://github.com/SODALITE-EU/iac-modules.git pds-openstack/modules/
                     ansible-galaxy install -r pds-openstack/modules/requirements.yml --force
                     cp ${ca_crt_file} pds-openstack/modules/docker/artifacts/ca.crt
                     cp ${ca_crt_file} pds-openstack/modules/misc/tls/artifacts/ca.crt
