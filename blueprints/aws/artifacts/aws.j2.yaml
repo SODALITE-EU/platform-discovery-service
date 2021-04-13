@@ -1,7 +1,7 @@
 tosca_definitions_version: tosca_simple_yaml_1_3 
 
 capability_types:
-  sodalite.capabilities.AWS.{{ namespace }}.InstanceType:
+  {{ namespace }}/sodalite.capabilities.AWS.InstanceType:
     derived_from: tosca.capabilities.Root
     properties:
       name:
@@ -22,7 +22,7 @@ capability_types:
 
 node_types:
 
-  sodalite.nodes.AWS.{{ namespace }}.Region:
+  {{ namespace }}/sodalite.nodes.AWS.Region:
     derived_from: tosca.nodes.Root
     properties:
       region_name:
@@ -32,7 +32,7 @@ node_types:
         type: string
         required: true 
 
-  sodalite.nodes.AWS.{{ namespace }}.VirtualPrivateCloud:
+  {{ namespace }}/sodalite.nodes.AWS.VirtualPrivateCloud:
     derived_from: tosca.nodes.Root
     properties:
       vpc_id:
@@ -49,10 +49,10 @@ node_types:
         required: true
     requirements:
       - region: 
-          node: sodalite.nodes.AWS.{{ namespace }}.Region
+          node: {{ namespace }}/sodalite.nodes.AWS.Region
           relationship: tosca.relationships.AttachesTo                  
 
-  sodalite.nodes.AWS.{{ namespace }}.Subnet:      
+  {{ namespace }}/sodalite.nodes.AWS.Subnet:      
     derived_from: tosca.nodes.Root  
     properties:
       subnet_id:
@@ -69,13 +69,13 @@ node_types:
         required: true   
     requirements:
       - region: 
-          node: sodalite.nodes.AWS.{{ namespace }}.Region
+          node: {{ namespace }}/sodalite.nodes.AWS.Region
           relationship: tosca.relationships.AttachesTo  
       - vpc:    
-          node: sodalite.nodes.AWS.{{ namespace }}.VirtualPrivateCloud
+          node: {{ namespace }}/sodalite.nodes.AWS.VirtualPrivateCloud
           relationship: tosca.relationships.AttachesTo  
   
-  sodalite.nodes.AWS.{{ namespace }}.AmazonMachineImage: 
+  {{ namespace }}/sodalite.nodes.AWS.AmazonMachineImage: 
     derived_from: tosca.nodes.Root
     properties:
       image_id:
@@ -89,7 +89,7 @@ node_types:
         required: true  
     requirements:
       - region: 
-          node: sodalite.nodes.AWS.{{ namespace }}.Region
+          node: {{ namespace }}/sodalite.nodes.AWS.Region
           relationship: tosca.relationships.AttachesTo         
                  
 topology_template:
@@ -97,8 +97,8 @@ topology_template:
   node_templates:
   #REGIONS
   {% for region in region_info.regions %}
-    sodalite-node-aws-region-{{ namespace }}-{{ region.region_name }}:
-      type: sodalite.nodes.AWS.{{ namespace }}.Region 
+    {{ namespace }}/sodalite-node-aws-region-{{ region.region_name }}:
+      type: {{ namespace }}/sodalite.nodes.AWS.Region 
       properties:
         region_name: {{ region.region_name }}
         endpoint: {{ region.endpoint }}
@@ -106,35 +106,35 @@ topology_template:
   {% endfor %}
   #VPC
   {% for vpc in vpc_info.vpcs %}
-    sodalite-node-aws-vpc-{{ namespace }}-{{ vpc.vpc_id }}:
-      type: sodalite.nodes.AWS.{{ namespace }}.VirtualPrivateCloud 
+    {{ namespace }}/sodalite-node-aws-vpc-{{ vpc.vpc_id }}:
+      type: {{ namespace }}/sodalite.nodes.AWS.VirtualPrivateCloud 
       properties:
         vpc_id: {{ vpc.vpc_id }}
         cidr_block: {{ vpc.cidr_block }}
         enable_dns_hostnames: {{ vpc.enable_dns_hostnames }}
         enable_dns_support: {{ vpc.enable_dns_support }}
       requirements:
-        - region: sodalite-node-aws-region-{{ namespace }}-{{ region_name }}
+        - region: {{ namespace }}/sodalite-node-aws-region-{{ region_name }}
 
   {% endfor %}
   #SUBNET
   {% for subnet in vpc_subnet_info.subnets %}
-    sodalite-node-aws-subnet-{{ namespace }}-{{ subnet.subnet_id }}:
-      type: sodalite.nodes.AWS.{{ namespace }}.VirtualPrivateCloud 
+    {{ namespace }}/sodalite-node-aws-subnet-{{ subnet.subnet_id }}:
+      type: {{ namespace }}/sodalite.nodes.AWS.VirtualPrivateCloud 
       properties:
         subnet_id: {{ subnet.subnet_id }}
         availability_zone: {{ subnet.availability_zone }}
         cidr_block: {{ subnet.cidr_block }}
         available_ip_address_count: {{ subnet.available_ip_address_count }}
       requirements:
-        - region: sodalite-node-aws-region-{{ namespace }}-{{ region_name }}
-        - vpc: sodalite-node-aws-region-{{ namespace }}-{{ subnet.vpc_id }}
+        - region: {{ namespace }}/sodalite-node-aws-region-{{ region_name }}
+        - vpc: {{ namespace }}/sodalite-node-aws-region-{{ subnet.vpc_id }}
 
   {% endfor %}
   #AMI
 {% for image in ami_info.images %}
-    sodalite-node-hpc-{{ namespace }}-{{ image.image_id }}:
-      type: sodalite.nodes.AWS.{{ namespace }}.AmazonMachineImage 
+    {{ namespace }}/sodalite-node-hpc-{{ image.image_id }}:
+      type: {{ namespace }}/sodalite.nodes.AWS.AmazonMachineImage 
 {% if image.description is defined %}
       description:  {{ image.platform_details }} \
                     {{ image.description }}
@@ -146,7 +146,7 @@ topology_template:
         name: {{ image.name }}
         platform_details: {{ image.platform_details }}
       requirements:
-        - region: sodalite-node-aws-region-{{ namespace }}-{{ region_name }}
+        - region: {{ namespace }}/sodalite-node-aws-region-{{ region_name }}
 
 {% endfor %}
 

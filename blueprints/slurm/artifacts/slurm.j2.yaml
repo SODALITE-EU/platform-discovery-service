@@ -2,13 +2,13 @@ tosca_definitions_version: tosca_simple_yaml_1_3
 
 capability_types:
 
-  sodalite.capabilities.{{ namespace }}.Queue:
+  {{ namespace }}/sodalite.capabilities.Queue:
     derived_from: tosca.capabilities.Compute
 
-  sodalite.capabilities.{{ namespace }}.WM:
+  {{ namespace }}/sodalite.capabilities.WM:
     derived_from: tosca.capabilities.Compute
 
-  sodalite.capabilities.{{ namespace }}.JobResources:
+  {{ namespace }}/sodalite.capabilities.JobResources:
     derived_from: tosca.capabilities.Compute
     properties:
       gpus:
@@ -23,7 +23,7 @@ capability_types:
 
 node_types:
 
-  sodalite.nodes.hpc.{{ namespace }}.SlurmNode:
+  {{ namespace }}/sodalite.nodes.hpc.SlurmNode:
     derived_from: tosca.nodes.Compute
     properties:
       name:
@@ -31,20 +31,20 @@ node_types:
         required: true
     capabilities:      
       resources:
-        type: sodalite.capabilities.{{ namespace }}.JobResources        
+        type: {{ namespace }}/sodalite.capabilities.JobResources        
       os:
         type: tosca.capabilities.OperatingSystem     
     requirements:
       - wm:                   
-          node: sodalite.nodes.hpc.{{ namespace }}.SlurmWM
-          capability: sodalite.capabilities.{{ namespace }}.WM
+          node: {{ namespace }}/sodalite.nodes.hpc.SlurmWM
+          capability: {{ namespace }}/sodalite.capabilities.WM
           relationship: tosca.relationships.AttachesTo
       - queue:                   
-          node: sodalite.nodes.hpc.{{ namespace }}.SlurmQueue
-          capability: sodalite.capabilities.{{ namespace }}.Queue
+          node: {{ namespace }}/sodalite.nodes.hpc.SlurmQueue
+          capability: {{ namespace }}/sodalite.capabilities.Queue
           relationship: tosca.relationships.AttachesTo            
 
-  sodalite.nodes.hpc.{{ namespace }}.SlurmQueue:
+  {{ namespace }}/sodalite.nodes.hpc.SlurmQueue:
     derived_from: tosca.nodes.Compute
     properties:
       name:
@@ -52,14 +52,14 @@ node_types:
         required: true
     capabilities:      
       resources:
-        type: sodalite.capabilities.{{ namespace }}.JobResources
+        type: {{ namespace }}/sodalite.capabilities.JobResources
     requirements:
       - wm:                   
-          node: sodalite.nodes.hpc.{{ namespace }}.SlurmWM
-          capability: sodalite.capabilities.{{ namespace }}.WM
+          node: {{ namespace }}/sodalite.nodes.hpc.SlurmWM
+          capability: {{ namespace }}/sodalite.capabilities.WM
           relationship: tosca.relationships.AttachesTo
 
-  sodalite.nodes.hpc.{{ namespace }}.SlurmWM: 
+  {{ namespace }}/sodalite.nodes.hpc.SlurmWM: 
     description: >
       Slurm wm, here we can define properties/attributes applicable for Slurm WM
     derived_from: tosca.nodes.Compute
@@ -72,7 +72,7 @@ node_types:
       host:
         type: tosca.capabilities.Compute
       resources:
-        type: sodalite.capabilities.{{ namespace }}.JobResources  
+        type: {{ namespace }}/sodalite.capabilities.JobResources  
 
 topology_template:
 
@@ -88,8 +88,8 @@ topology_template:
 {% set total_cpus = [0] -%}
 {% set total_memory = [0] -%}
 {% for node in node_info.slurm_node %}
-    node-hpc-{{ namespace }}-{{ node.NodeName | replace(" ","-") }}:
-      type: sodalite.nodes.hpc.{{ namespace }}.SlurmNode
+    {{ namespace }}/node-hpc-{{ node.NodeName | replace(" ","-") }}:
+      type: {{ namespace }}/sodalite.nodes.hpc.SlurmNode
       properties:
         name: {{ node.NodeName }}
       capabilities:    
@@ -102,8 +102,8 @@ topology_template:
           type: {{ node.OS }} 
 {% endif %}
       requirements:
-        - wm: hpc-wm-slurm-{{ namespace }}-wm
-        - queue: queue-hpc-{{ namespace }}-{{ node.Partitions | replace(" ","-") }}
+        - wm: {{ namespace }}/hpc-wm-slurm-wm
+        - queue: {{ namespace }}/queue-hpc-{{ node.Partitions | replace(" ","-") }}
              
 {% if total_gpus.append(total_gpus.pop() + node.Gres.total_gpu|int) -%}{% endif %}
 {% if total_cpus.append(total_cpus.pop() + node.CPUTot|int) -%}{% endif %}
@@ -121,8 +121,8 @@ topology_template:
 {% if part_memory.append(part_memory.pop() + node.RealMemory|int) -%}{% endif %}
 {% endif %}
 {% endfor %}
-    queue-hpc-{{ namespace }}-{{ partition.PartitionName | replace(" ","-") }}:
-      type: sodalite.nodes.hpc.{{ namespace }}.SlurmQueue
+    {{ namespace }}/queue-hpc-{{ partition.PartitionName | replace(" ","-") }}:
+      type: {{ namespace }}/sodalite.nodes.hpc.SlurmQueue
       properties:
         name: {{ partition.PartitionName }}
       capabilities:    
@@ -131,12 +131,12 @@ topology_template:
           cpus: {{ part_cpus[0] }}
           memory: {{ part_memory[0] }}           
       requirements:
-        - wm: hpc-wm-slurm-{{ namespace }}-wm  
+        - wm: {{ namespace }}/hpc-wm-slurm-wm  
 
 {% endfor %}
 
-    hpc-wm-slurm-{{ namespace }}-wm:
-      type: sodalite.nodes.hpc.{{ namespace }}.SlurmWM
+    {{ namespace }}/hpc-wm-slurm-wm:
+      type: {{ namespace }}/sodalite.nodes.hpc.SlurmWM
       attributes:
         public_address: {{ frontend_address }}
         username: { get_input: user }

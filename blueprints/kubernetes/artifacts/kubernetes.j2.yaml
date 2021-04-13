@@ -2,18 +2,20 @@ tosca_definitions_version: tosca_simple_yaml_1_3
 
 node_types:
 
-  sodalite.nodes.Kubernetes.Definition:
+  {{ namespace }}/sodalite.nodes.Kubernetes.Definition:
     derived_from: tosca.nodes.SoftwareComponent
   
-  sodalite.nodes.Kubernetes.Kind:
+  {{ namespace }}/sodalite.nodes.Kubernetes.Kind:
     derived_from: tosca.nodes.SoftwareComponent
 
-  sodalite.nodes.Kubernetes.Node:  
+  {{ namespace }}/sodalite.nodes.Kubernetes.Node:  
     derived_from: tosca.nodes.Compute
     capabilities:
       host:
         type: tosca.capabilities.Compute
-        valid_source_types: [ sodalite.nodes.Kubernetes.Kind, sodalite.nodes.Kubernetes.Definition ]
+        valid_source_types: 
+        - {{ namespace }}/sodalite.nodes.Kubernetes.Kind
+        - {{ namespace }}/sodalite.nodes.Kubernetes.Definition
     properties:  
       name:  
         description: Name of the node
@@ -54,8 +56,8 @@ topology_template:
 {% for node in nodes_info.resources | default([]) %}
 {% if node.metadata.name == payload.node %}
 
-    node-{{ node.metadata.name | replace(" ","_") }}: 
-      type: kube/sodalite.nodes.Kubernetes.Node
+    {{ namespace }}/node-{{ node.metadata.name | replace(" ","_") }}: 
+      type: {{ namespace }}/sodalite.nodes.Kubernetes.Node
       properties:
         name: {{ node.metadata.name }}
 {% for condition in node.status.conditions | default([]) %}
@@ -96,8 +98,8 @@ topology_template:
 
 {% elif nodes_info | length  %}
 {% for node in nodes_info.resources | default([]) %}
-    node-{{ node.metadata.name | replace(" ","_") }}: 
-      type: kube/sodalite.nodes.Kubernetes.Node
+    {{ namespace }}/node-{{ node.metadata.name | replace(" ","_") }}: 
+      type: {{ namespace }}/sodalite.nodes.Kubernetes.Node
       properties:
         name: {{ node.metadata.name }}
 {% for condition in node.status.conditions | default([]) %}
