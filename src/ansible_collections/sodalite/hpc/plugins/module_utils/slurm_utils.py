@@ -3,6 +3,7 @@ import re
 regex_template = (r"{0}=(?P<{0}>\S+)"
                   r"|(?P<name>\w+)=(?P<value>([^=^\[^\]]*\s|[\S]*\s))")
 regex_gres = r"(?P<gpu>gpu):(?P<type>\w+)?:?(?P<number>\d+)"
+regex_job = r"Submitted batch job (?P<number>\d+)"
 
 
 def parse_output(stdout, item_name):
@@ -36,3 +37,11 @@ def parse_gres(gres_string):
                 gres["gpu"][match.group("type")] = int(match.group("number"))
 
     return gres
+
+
+def parse_job_output(job_string):
+    match = re.match(regex_job, job_string.strip(), re.IGNORECASE)
+    if match is not None:
+        return (int(match.group("number")))
+
+    return None
