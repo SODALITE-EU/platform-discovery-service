@@ -1,0 +1,55 @@
+---
+  - hosts: localhost
+    gather_facts: no
+    tasks:
+      - name: >
+          Create temporary inventory for wm,
+          since opera requires internal envvars to access the target.
+          Need more examples to access static nodes without specifying them in the inventory file
+        add_host:
+          name: wm
+          groups: wm
+          ansible_host: host_address
+          ansible_user: username
+          ansible_ssh_common_args: >
+            -o IdentitiesOnly=no
+            -o BatchMode=yes
+            -o UserKnownHostsFile=/dev/null
+            -o StrictHostKeyChecking=no
+  - hosts: wm
+    gather_facts: no
+    tasks:
+    - name: start the job
+      sodalite.hpc.slurm_job:
+        job_name: 'test'
+        node_count: 1
+        process_count_per_node: 1
+        job_contents: |
+                        sleep 60
+                        echo 'test'
+        keep_job_script: False
+      register: job_info
+
+    - name: get job info
+      sodalite.hpc.slurm_job_info:
+        job_id: '{{ job_info.slurm_job.JobId }}'
+
+    - name: suspend the job
+      become: true
+      sodalite.hpc.slurm_job:
+        job_id: '{{ job_info.slurm_job.JobId }}'
+        state: 'paused'
+
+    - name: get job info 2
+      sodalite.hpc.slurm_job_info:
+        job_id: '{{ job_info.slurm_job.JobId }}'
+
+    - name: resume the job
+      become: true
+      sodalite.hpc.slurm_job:
+        job_id: '{{ job_info.slurm_job.JobId }}'
+
+    - name: cancel the job
+      sodalite.hpc.slurm_job:
+        job_id: '{{ job_info.slurm_job.JobId }}'
+        state: 'cancelled'
