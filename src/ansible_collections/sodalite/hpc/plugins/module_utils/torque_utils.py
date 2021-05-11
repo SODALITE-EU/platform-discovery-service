@@ -9,6 +9,9 @@ regex_queue_state = r"(?P<state>\w+):(?P<value>\d+)"
 regex_node_properties = r"(?P<name>[^,]+)"
 regex_memory = r"(?P<number>\d+)\s*(?P<measure>kb|mb|)$"
 
+regex_job_info = r"Job Id: (?P<itemname>\S+)\n|((?P<name>\S+)(?=\s=\s)(\s=\s)(?P<value>(.+\n?)))"
+regex_var_list = r"(?P<item_name>[^,]+)=(?P<item_value>[^,]+),?"
+
 
 def parse_node_output(stdout):
     node = {}
@@ -116,3 +119,27 @@ def parse_num_values(memory_string):
             return int(round(int(match.group("number")) / 1024))
 
     return memory_string
+
+
+def parse_job_output(stdout):
+    job = {}
+    normalized = re.sub("\n {8,}", "", stdout)
+    matches = re.finditer(regex_job_info, normalized, re.MULTILINE)
+    for matchNum, match in enumerate(matches, start=1):
+        if match.group("itemname") is not None:
+            job["Job_Id"] = match.group("itemname")
+        else:
+            var_matches = re.finditer(regex_var_list,  match.group("value"), re.IGNORECASE)
+            job[match.group("name")] = match.group("value").strip()
+
+    return job
+
+
+def parse_var_list(list_string):
+    variables = {}
+    matches = re.finditer(regex_var_list, list_string.strip())
+    for matchNum, match in enumerate(matches, start=1):
+        variables[match.group("item_name").strip()] = match.group("item_value").strip()
+
+    return variables
+

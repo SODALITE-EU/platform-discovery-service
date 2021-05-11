@@ -1,10 +1,11 @@
+
 from ansible_collections.sodalite.hpc.plugins.module_utils import (
     torque_utils)
 from ansible_collections.sodalite.hpc.plugins.modules import (
     torque_node_info, torque_queue_info)
 from ansible.module_utils.basic import AnsibleModule
 import pytest
-
+import textwrap
 
 class TestTorqueHPCUtils:
 
@@ -79,6 +80,76 @@ class TestTorqueHPCUtils:
         return stdout
 
     @pytest.fixture
+    def torque_job_stdout(self):
+        stdout = """
+        Job Id: 2310.cloudserver
+            Job_Name = hpc-test-1
+            Job_Owner = user@cloudserver
+            resources_used.cput = 00:00:00
+            resources_used.vmem = 335048kb
+            resources_used.walltime = 00:00:30
+            resources_used.mem = 564kb
+            resources_used.energy_used = 0
+            job_state = C
+            queue = batch
+            server = cloudserver
+            Checkpoint = u
+            ctime = Thu May  6 17:06:44 2021
+            Error_Path = cloudserver:/mnt/nfs/home/
+            exec_host = node-1.novalocal/0-19
+            Hold_Types = n
+            Join_Path = n
+            Keep_Files = n
+            Mail_Points = abe
+            Mail_Users = test@gmail.com
+            mtime = Thu May  6 17:07:14 2021
+            Output_Path = cloudserver:/mnt/nfs/home/
+            Priority = 0
+            qtime = Thu May  6 17:06:44 2021
+            Rerunable = True
+            Resource_List.nodes = 1:ppn=20
+            Resource_List.walltime = 00:30:00
+            Resource_List.epilogue = /mnt/nfs/home/
+            Resource_List.nodect = 1
+            session_id = 16944
+            Shell_Path_List = /bin/sh
+            Variable_List = PBS_O_QUEUE=batch,PBS_O_HOME=/mnt/nfs/home/,
+                PBS_O_LOGNAME=user,
+                PBS_O_PATH=/usr/local/bin:/usr/local/sbin:/opt/nfs/usr/local/Modules/
+                bin:/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/mnt/nfs/home/al
+                exander/.local/bin:/mnt/nfs/home/user/bin,
+                PBS_O_MAIL=/var/spool/mail/user,PBS_O_SHELL=/bin/bash,
+                PBS_O_LANG=en_US.UTF-8,PBS_O_WORKDIR=/mnt/nfs/home/user,
+                PBS_O_HOST=cloudserver,PBS_O_SERVER=cloudserver.novalocal
+            euser = user
+            egroup = user
+            queue_type = E
+            comment = Job started on Thu May 06 at 17:06
+            etime = Thu May  6 17:06:44 2021
+            exit_status = 0
+            submit_args = hpc-test-1.pbs
+            start_time = Thu May  6 17:06:44 2021
+            start_count = 1
+            fault_tolerant = False
+            comp_time = Thu May  6 17:07:14 2021
+            job_radix = 0
+            total_runtime = 30.314982
+            submit_host = cloudserver
+            init_work_dir = /mnt/nfs/home/user
+            request_version = 1
+            req_information.task_count.0 = 1
+            req_information.lprocs.0 = 20
+            req_information.thread_usage_policy.0 = allowthreads
+            req_information.hostlist.0 = node-1.novalocal:ppn=20
+            req_information.task_usage.0.task.0.cpu_list = 0-19
+            req_information.task_usage.0.task.0.mem_list = 0-1
+            req_information.task_usage.0.task.0.cores = 0
+            req_information.task_usage.0.task.0.threads = 20
+            req_information.task_usage.0.task.0.host = node-1.novalocal
+        """
+        return stdout
+
+    @pytest.fixture
     def torque_gpu_status(self):
         stdout = """
         gpu[1]=gpu_id=00000000:03:00.0;gpu_pci_device_id=453382366;gpu_pci_location_id=00000000:03:00.0;gpu_product_name=GeForce GTX 1080 Ti;gpu_fan_speed=25%;gpu_memory_total=11178 MB;gpu_memory_used=0 MB;gpu_mode=Exclusive_Process;gpu_state=Unallocated;gpu_utilization=0%;gpu_memory_utilization=0%;gpu_temperature=40 C,gpu[0]=gpu_id=00000000:03:00.0;gpu_pci_device_id=453382366;gpu_pci_location_id=00000000:03:00.0;gpu_product_name=GeForce GTX 1080 Ti;gpu_fan_speed=25%;gpu_memory_total=11178 MB;gpu_memory_used=0 MB;gpu_mode=Exclusive_Process;gpu_state=Unallocated;gpu_utilization=0%;gpu_memory_utilization=0%;gpu_temperature=40 C,gpu_display=Disabled,driver_ver=450.51.05,timestamp=Tue Nov 24 15:41:03 2020
@@ -97,28 +168,28 @@ class TestTorqueHPCUtils:
         stdout = """
         Transit:0 Queued:0 Held:0 Waiting:0 Running:0 Exiting:0 Complete:0
         """
-        return stdout        
+        return stdout
 
     @pytest.fixture
     def torque_node_properties(self):
         stdout = """
         batch,cpu,gpu
         """
-        return stdout   
+        return stdout
 
     @pytest.fixture
     def slurm_node_gres1(self):
         stdout = """
         Gres=gpu:tesla:2,gpu:kepler:2,mps:400,bandwidth:lustre:no_consume:4G
         """
-        return stdout     
+        return stdout
 
     @pytest.fixture
     def slurm_node_gres2(self):
         stdout = """
         Gres=gpu:4(S:0-1)
         """
-        return stdout   
+        return stdout
 
     def test_torque_utils_node(self, torque_node_stdout):
         nodes = torque_utils.parse_node_output(torque_node_stdout)
@@ -152,6 +223,11 @@ class TestTorqueHPCUtils:
         properties = torque_utils.parse_node_properties(torque_node_properties)
         assert len(properties) == 3
         assert properties[1] == "cpu"
+
+    def test_torque_utils_job(self, torque_job_stdout):
+        torque_job_stdout = textwrap.dedent(torque_job_stdout)
+        job = torque_utils.parse_job_output(torque_job_stdout)
+        assert job["Job_Id"] == "2310.cloudserver"
 
     def test_torque_node_info(self, mocker, torque_node_stdout):
         module = mocker.patch.object(AnsibleModule,
