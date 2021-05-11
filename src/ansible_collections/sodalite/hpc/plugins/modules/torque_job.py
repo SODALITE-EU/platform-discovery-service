@@ -37,40 +37,6 @@ class TorqueHpcJobModule(HpcJobModule):
     def __init__(self):
         super(TorqueHpcJobModule, self).__init__('#PBS')
 
-    def run_module(self):
-        state = self.ansible.params['state']
-
-        if state == 'queued' and not (self.ansible.params["job_name"] or self.ansible.params["job_id"]):
-            self.ansible.fail_json(
-                msg="Parameter 'job_name' or 'job_id' is required if state == 'queued'"
-            )
-
-        if state == 'cancelled' and not self.ansible.params["job_id"]:
-            self.ansible.fail_json(
-                msg="Parameter 'job_id' is required if state == 'cancelled'"
-            )
-
-        if state == 'paused' and not self.ansible.params["job_id"]:
-            self.ansible.fail_json(
-                msg="Parameter 'job_id' is required if state == 'paused'"
-            )
-
-        if state == 'queued':
-            if self.ansible.params["job_name"]:
-                contents = self.prepare_file()
-                filename = self.write_file("{}.torque".format(self.ansible.params["job_name"]), contents)
-                changed, result = self.create_job(filename)
-                if not self.ansible.params["keep_job_script"]:
-                    self.ansible.add_cleanup_file(filename)
-            else:
-                changed, result = self.resume_job(self.ansible.params["job_id"])
-        if state == 'cancelled':
-            changed, result = self.delete_job(self.ansible.params["job_id"])
-        if state == 'paused':
-            changed, result = self.pause_job(self.ansible.params["job_id"])
-
-        self.ansible.exit_json(changed=changed, **result)
-
     def prepare_file(self):
         file_contents = []
         file_contents.append(self.DIRECTIVE + ' -S ' + '/bin/bash')

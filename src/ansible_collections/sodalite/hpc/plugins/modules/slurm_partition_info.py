@@ -24,57 +24,42 @@ slurm_partition_info:
 
 '''
 
-from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_text
 from ansible_collections.sodalite.hpc.plugins.module_utils import (
     slurm_utils
 )
+from ansible_collections.sodalite.hpc.plugins.module_utils.hpc_module import (
+    HpcModule
+)
 
 
-def slurm_partition_info_argument_spec():
+class SlurmHpcPartitionInfoModule(HpcModule):
+    def __init__(self):
+        self.argument_spec = dict(
+            partition=dict(type='str', required=False)
+        )
+        super(SlurmHpcPartitionInfoModule, self).__init__()
 
-    module_args = dict(
-        partition=dict(type='str', required=False)
-    )
-
-    return module_args
-
-
-def run_module():
-
-    module = AnsibleModule(slurm_partition_info_argument_spec())
-
-    result = execute_command(module)
-
-    module.exit_json(changed=False, **result)
-
-
-def execute_command(module):
-    partition_name = module.params['partition']
-
-    try:
+    def run_module(self):
+        partition_name = self.ansible.params['partition']
         command = 'scontrol show partition {}'.format(partition_name) if partition_name is not None else 'scontrol show partition'
-        stdin, stdout, stderr = module.run_command(command)
-    except Exception as err:
-        module.fail_json(
-                msg='Failed to execute scontrol command',
-                details=to_text(err),
-        )
+        stdout = self.execute_command(command)
 
-    result = {}
-    try:
-        result["slurm_partition"] = slurm_utils.parse_output(stdout, "PartitionName")
-    except Exception as err:
-        module.fail_json(
-                msg='Failed to parse scontrol output',
-                details=to_text(err),
-        )
+        result = {}
+        try:
+            result["slurm_partition"] = slurm_utils.parse_output(stdout, "PartitionName")
+        except Exception as err:
+            self.ansible.fail_json(
+                    msg='Failed to parse scontrol output',
+                    details=to_text(err),
+            )
 
-    return result
+        self.ansible.exit_json(changed=False, **result)
 
 
 def main():
-    run_module()
+    module = SlurmHpcPartitionInfoModule()
+    module.run_module()
 
 
 if __name__ == '__main__':

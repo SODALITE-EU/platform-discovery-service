@@ -32,6 +32,14 @@ class HpcModule(object):
 
         return stdout
 
+    @abstractmethod
+    def get_job_state(self, job_id):
+        pass
+
+    @abstractmethod
+    def get_job_info(self, job_id):
+        pass
+
 
 class HpcJobModule(HpcModule):
     def __init__(self, directive):
@@ -90,6 +98,56 @@ class HpcJobModule(HpcModule):
         fh.close()
         return filename
 
+    def run_module(self):
+        state = self.ansible.params['state']
+
+        if state == 'queued' and not (self.ansible.params["job_name"] or self.ansible.params["job_id"]):
+            self.ansible.fail_json(
+                msg="Parameter 'job_name' or 'job_id' is required if state == 'queued'"
+            )
+
+        if state == 'cancelled' and not self.ansible.params["job_id"]:
+            self.ansible.fail_json(
+                msg="Parameter 'job_id' is required if state == 'cancelled'"
+            )
+
+        if state == 'paused' and not self.ansible.params["job_id"]:
+            self.ansible.fail_json(
+                msg="Parameter 'job_id' is required if state == 'paused'"
+            )
+
+        if state == 'queued':
+            if self.ansible.params["job_name"]:
+                contents = self.prepare_file()
+                filename = self.write_file("{}.torque".format(self.ansible.params["job_name"]), contents)
+                changed, result = self.create_job(filename)
+                if not self.ansible.params["keep_job_script"]:
+                    self.ansible.add_cleanup_file(filename)
+            else:
+                changed, result = self.resume_job(self.ansible.params["job_id"])
+        if state == 'cancelled':
+            changed, result = self.delete_job(self.ansible.params["job_id"])
+        if state == 'paused':
+            changed, result = self.pause_job(self.ansible.params["job_id"])
+
+        self.ansible.exit_json(changed=changed, **result)
+
     @abstractmethod
-    def get_job_state(self, job_id):
+    def prepare_file(self):
+        pass
+
+    @abstractmethod
+    def create_job(self, job_id):
+        pass
+
+    @abstractmethod
+    def delete_job(self, job_id):
+        pass
+
+    @abstractmethod
+    def pause_job(self, job_id):
+        pass
+
+    @abstractmethod
+    def resume_job(self, job_id):
         pass

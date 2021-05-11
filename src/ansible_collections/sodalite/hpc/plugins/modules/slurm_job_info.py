@@ -24,65 +24,61 @@ slurm_job_info:
 
 '''
 
-from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_text
 from ansible_collections.sodalite.hpc.plugins.module_utils import (
     slurm_utils
 )
+from ansible_collections.sodalite.hpc.plugins.module_utils.hpc_module import (
+    HpcModule
+)
 
 
-def slurm_job_info_argument_spec():
-
-    module_args = dict(
-        job_id=dict(type='str', required=True)
-    )
-
-    return module_args
-
-
-def run_module():
-    module = AnsibleModule(slurm_job_info_argument_spec())
-    result = execute_command(module)
-    module.exit_json(changed=False, **result)
-
-
-def execute_command(module):
-    job_id = module.params['job_id']
-
-    if not job_id:
-        module.fail_json(
-            msg="Parameter 'job_id' is required"
+class SlurmHpcJobInfoModule(HpcModule):
+    def __init__(self):
+        self.argument_spec = dict(
+            job_id=dict(type='str', required=True)
         )
+        super(SlurmHpcJobInfoModule, self).__init__()
 
-    try:
-        command = 'scontrol show job {}'.format(job_id)
-        stdin, stdout, stderr = module.run_command(command)
-    except Exception as err:
-        module.fail_json(
-                msg='Failed to execute scontrol command',
-                details=to_text(err),
-        )
+    def run_module(self):
+        job_id = self.ansible.params['job_id']
 
-    result = {}
-    try:
-        job_info = slurm_utils.parse_output(stdout, "JobId")
-    except Exception as err:
-        module.fail_json(
-                msg='Failed to parse scontrol output',
-                details=to_text(err),
-        )
+        if not job_id:
+            self.ansible.fail_json(
+                msg="Parameter 'job_id' is required"
+            )
 
-    if len(job_info) == 1:
-        result["slurm_job"] = job_info[0]
-        return result
-    else:
-        module.fail_json(
-            msg="Incorrect job status output"
-        )
+        result = self.get_job_info(job_id)
+
+        self.ansible.exit_json(changed=False, **result)
+
+    def get_job_state(self, job_id):
+        return self.get_job_info(job_id)["slurm_job"]["JobState"]
+
+    def get_job_info(self, job_id):
+        stdout = self.execute_command('scontrol show job {}', job_id)
+
+        result = {}
+        try:
+            job_info = slurm_utils.parse_output(stdout, "JobId")
+        except Exception as err:
+            self.ansible.fail_json(
+                    msg='Failed to parse scontrol output',
+                    details=to_text(err),
+            )
+
+        if len(job_info) == 1:
+            result["slurm_job"] = job_info[0]
+            return result
+        else:
+            self.ansible.fail_json(
+                msg="Incorrect job status output"
+            )
 
 
 def main():
-    run_module()
+    module = SlurmHpcJobInfoModule()
+    module.run_module()
 
 
 if __name__ == '__main__':
