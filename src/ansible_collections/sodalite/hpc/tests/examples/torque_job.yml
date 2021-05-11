@@ -1,0 +1,57 @@
+---
+  - hosts: localhost
+    gather_facts: no
+    tasks:
+      - name: >
+          Create temporary inventory for wm,
+          since opera requires internal envvars to access the target.
+          Need more examples to access static nodes without specifying them in the inventory file
+        add_host:
+          name: wm
+          groups: wm
+          ansible_host: address
+          ansible_user: username
+          ansible_ssh_common_args: >
+            -o IdentitiesOnly=no
+            -o BatchMode=yes
+            -o UserKnownHostsFile=/dev/null
+            -o StrictHostKeyChecking=no
+  - hosts: wm
+    gather_facts: no
+    tasks:
+    - name: run the job
+      sodalite.hpc.torque_job:
+        job_name: 'test'
+        node_count: 1
+        process_count_per_node: 1
+        job_contents: |
+                        sleep 60
+                        echo 'test'
+        keep_job_script: False
+      register: job_info
+
+    - name: get the job
+      sodalite.hpc.torque_job_info:
+        job_id: '{{ job_info.torque_job.Job_Id }}'
+
+    - name: get node info
+      sodalite.hpc.torque_node_info:
+
+    - name: get queue info
+      sodalite.hpc.torque_queue_info:
+
+    # - name: suspend the job
+    #   become: true
+    #   sodalite.hpc.torque_job:
+    #     job_id: '{{ job_info.torque_job.Job_Id }}'
+    #     state: 'paused'
+
+    # - name: resume the job
+    #   become: true
+    #   sodalite.hpc.torque_job:
+    #     job_id: '{{ job_info.torque_job.Job_Id }}'
+
+    - name: cancel the job
+      sodalite.hpc.torque_job:
+        job_id: '{{ job_info.torque_job.Job_Id }}'
+        state: 'cancelled'
