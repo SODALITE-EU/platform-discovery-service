@@ -24,57 +24,42 @@ torque_node_info:
 
 '''
 
-from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_text
 from ansible_collections.sodalite.hpc.plugins.module_utils import (
     torque_utils
 )
+from ansible_collections.sodalite.hpc.plugins.module_utils.hpc_module import (
+    HpcModule
+)
 
 
-def torque_queue_info_argument_spec():
+class TorqueHpcQueueInfoModule(HpcModule):
+    def __init__(self):
+        self.argument_spec = dict(
+            queue=dict(type='str', required=False)
+        )
+        super(TorqueHpcQueueInfoModule, self).__init__()
 
-    module_args = dict(
-        queue=dict(type='str', required=False)
-    )
-
-    return module_args
-
-
-def run_module():
-
-    module = AnsibleModule(torque_queue_info_argument_spec())
-
-    result = execute_command(module)
-
-    module.exit_json(changed=False, **result)
-
-
-def execute_command(module):
-    queue_name = module.params['queue']
-
-    try:
+    def run_module(self):
+        queue_name = self.ansible.params['queue']
         command = 'qstat -Q -f -1 {}'.format(queue_name) if queue_name is not None else 'qstat -Q -f -1'
-        stdin, stdout, stderr = module.run_command(command)
-    except Exception as err:
-        module.fail_json(
-                msg='Failed to execute qstat command',
-                details=to_text(err),
-        )
+        stdout = self.execute_command(command)
 
-    result = {}
-    try:
-        result["torque_queue"] = torque_utils.parse_queue_output(stdout)
-    except Exception as err:
-        module.fail_json(
-                msg='Failed to parse qstat output',
-                details=to_text(err),
-        )
+        result = {}
+        try:
+            result["torque_queue"] = torque_utils.parse_queue_output(stdout)
+        except Exception as err:
+            self.ansible.fail_json(
+                    msg='Failed to parse qstat output',
+                    details=to_text(err),
+            )
 
-    return result
+        self.ansible.exit_json(changed=False, **result)
 
 
 def main():
-    run_module()
+    module = TorqueHpcQueueInfoModule()
+    module.run_module()
 
 
 if __name__ == '__main__':
