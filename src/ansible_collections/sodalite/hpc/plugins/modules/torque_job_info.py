@@ -10,51 +10,71 @@ ANSIBLE_METADATA = {
     'supported_by': 'community'
 }
 
-DOCUMENTATION = '''
----
+DOCUMENTATION = """
 module: torque_job_info
-'''
+author:
+  - Alexander Maslennikov (@amaslenn)
+short_description: List Torque jobs
+description:
+  - Retrieve information about jobs on Torque Workload Manager.
+version_added: 1.0.0
+seealso:
+  - module: sodalite.hpc.torque_job
+options:
+  job_id:
+    type: str
+    description:
+      - The ID of the job to retrieve.
+"""
 
-EXAMPLES = '''
+EXAMPLES = """
+- name: List all jobs
+  sodalite.hpc.torque_job_info:
+  register: result
+- name: List the selected job
+  sodalite.hpc.torque_job_info:
+    job_id: 2346.cloudserver
+  register: result
+- name: Show job state
+  ansible.builtin.debug:
+    msg: "{{ result.jobs[0].state }}"
+"""
 
-'''
+RETURN = """
+jobs:
+  description: List of Torque jobs.
+  returned: success
+  type: list
+  elements: dict
+"""
 
-RETURN = '''
-torque_job_info:
-
-'''
 
 from ansible.module_utils._text import to_text
-from ansible_collections.sodalite.hpc.plugins.module_utils import (
-    torque_utils
-)
-from ansible_collections.sodalite.hpc.plugins.module_utils.hpc_module import (
-    HpcModule
-)
+from ..module_utils import torque_utils
+from ..module_utils.hpc_module import HpcModule
 
 
 class TorqueHpcJobInfoModule(HpcModule):
     def __init__(self):
         self.argument_spec = dict(
-            job_id=dict(type='str', required=True)
+            job_id=dict(type='str', required=False)
         )
         super(TorqueHpcJobInfoModule, self).__init__()
 
     def run_module(self):
         job_id = self.ansible.params['job_id']
         if not job_id:
-            self.ansible.fail_json(
-                msg="Parameter 'job_id' is required"
-            )
-        stdout = self.execute_command('qstat -f {}', job_id)
+            stdout = self.execute_command('qstat -f')
+        else:
+            stdout = self.execute_command('qstat -f {}', job_id)
 
         result = {}
         try:
             result["torque_job"] = torque_utils.parse_job_output(stdout)
         except Exception as err:
             self.ansible.fail_json(
-                    msg='Failed to parse qstat output',
-                    details=to_text(err),
+                msg='Failed to parse qstat output',
+                details=to_text(err),
             )
         self.ansible.exit_json(changed=False, **result)
 

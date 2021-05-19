@@ -9,7 +9,7 @@ namespace: sodalite
 name: hpc
 
 # The version of the collection. Must be compatible with semantic versioning
-version: 0.1.0
+version: 1.0.0
 
 readme: README.md
 
@@ -21,9 +21,9 @@ tags:
   - torque
   - slurm
   - discovery
+  - hpc
 
-readme: README.md
 license_file: COPYING
-description: Roles and modules for discovering HPC resources
+description: Modules for discovering HPC resources. Modules for managing HPC jobs.
 
 repository: https://github.com/SODALITE-EU/platform-discovery-service

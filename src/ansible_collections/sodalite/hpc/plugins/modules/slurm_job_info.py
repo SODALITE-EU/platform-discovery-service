@@ -10,70 +10,77 @@ ANSIBLE_METADATA = {
     'supported_by': 'community'
 }
 
-DOCUMENTATION = '''
----
+DOCUMENTATION = """
 module: slurm_job_info
-'''
+author:
+  - Alexander Maslennikov (@amaslenn)
+short_description: List Slurm jobs
+description:
+  - Retrieve information about jobs on Slurm Workload Manager.
+  - For more information, refer to the Slurm documentation at
+    U(https://slurm.schedmd.com/scontrol.html).
+version_added: 1.0.0
+seealso:
+  - module: sodalite.hpc.slurm_job
+options:
+  job_id:
+    type: str
+    description:
+      - The ID of the job to retrieve.
+"""
 
-EXAMPLES = '''
+EXAMPLES = """
+- name: List all jobs
+  sodalite.hpc.slurm_job_info:
+  register: result
+- name: List the selected job
+  sodalite.hpc.slurm_job_info:
+    job_id: 72
+  register: result
+- name: Show job state
+  ansible.builtin.debug:
+    msg: "{{ result.jobs[0].state }}"
+"""
 
-'''
-
-RETURN = '''
-slurm_job_info:
-
-'''
+RETURN = """
+jobs:
+  description: List of Slurm jobs.
+  returned: success
+  type: list
+  elements: dict
+"""
 
 from ansible.module_utils._text import to_text
-from ansible_collections.sodalite.hpc.plugins.module_utils import (
-    slurm_utils
-)
-from ansible_collections.sodalite.hpc.plugins.module_utils.hpc_module import (
-    HpcModule
-)
+from ..module_utils import slurm_utils
+from ..module_utils.hpc_module import HpcModule
 
 
 class SlurmHpcJobInfoModule(HpcModule):
     def __init__(self):
         self.argument_spec = dict(
-            job_id=dict(type='str', required=True)
+            job_id=dict(type='str', required=False)
         )
         super(SlurmHpcJobInfoModule, self).__init__()
 
     def run_module(self):
         job_id = self.ansible.params['job_id']
-
         if not job_id:
-            self.ansible.fail_json(
-                msg="Parameter 'job_id' is required"
-            )
-
-        result = self.get_job_info(job_id)
-
-        self.ansible.exit_json(changed=False, **result)
-
-    def get_job_state(self, job_id):
-        return self.get_job_info(job_id)["slurm_job"]["JobState"]
-
-    def get_job_info(self, job_id):
-        stdout = self.execute_command('scontrol show job {}', job_id)
+            stdout = self.execute_command('scontrol show job')
+        else:
+            stdout = self.execute_command('scontrol show job {}', job_id)
 
         result = {}
         try:
             job_info = slurm_utils.parse_output(stdout, "JobId")
         except Exception as err:
             self.ansible.fail_json(
-                    msg='Failed to parse scontrol output',
-                    details=to_text(err),
+                msg='Failed to parse scontrol output',
+                details=to_text(err),
             )
 
-        if len(job_info) == 1:
-            result["slurm_job"] = job_info[0]
-            return result
-        else:
-            self.ansible.fail_json(
-                msg="Incorrect job status output"
-            )
+        result["jobs"] = job_info
+
+        self.ansible.exit_json(changed=False, **result)
 
 
 def main():

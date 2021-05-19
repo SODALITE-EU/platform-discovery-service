@@ -10,27 +10,47 @@ ANSIBLE_METADATA = {
     'supported_by': 'community'
 }
 
-DOCUMENTATION = '''
----
-module: torque_node_info
-'''
+DOCUMENTATION = """
+module: torque_queue_info
+author:
+  - Alexander Maslennikov (@amaslenn)
+short_description: List Torque queues
+description:
+  - Retrieve information about queues on Torque Workload Manager.
+version_added: 1.0.0
+seealso:
+  - module: sodalite.hpc.torque_node_info
+options:
+  queue:
+    type: str
+    description:
+      - Name of the queue to retrieve.
+"""
 
-EXAMPLES = '''
+EXAMPLES = """
+- name: List all queues
+  sodalite.hpc.torque_queue_info:
+  register: result
+- name: List the selected queue
+  sodalite.hpc.torque_queue_info:
+    queue: cpu
+  register: result
+- name: Show queue jobs number
+  ansible.builtin.debug:
+    msg: "{{ result.queues[0].total_jobs }}"
+"""
 
-'''
-
-RETURN = '''
-torque_node_info:
-
-'''
+RETURN = """
+queues:
+  description: List of Torque queues.
+  returned: success
+  type: list
+  elements: dict
+"""
 
 from ansible.module_utils._text import to_text
-from ansible_collections.sodalite.hpc.plugins.module_utils import (
-    torque_utils
-)
-from ansible_collections.sodalite.hpc.plugins.module_utils.hpc_module import (
-    HpcModule
-)
+from ..module_utils import torque_utils
+from ..module_utils.hpc_module import HpcModule
 
 
 class TorqueHpcQueueInfoModule(HpcModule):
@@ -42,16 +62,16 @@ class TorqueHpcQueueInfoModule(HpcModule):
 
     def run_module(self):
         queue_name = self.ansible.params['queue']
-        command = 'qstat -Q -f -1 {}'.format(queue_name) if queue_name is not None else 'qstat -Q -f -1'
+        command = 'qstat -Q -f -1 {0}'.format(queue_name) if queue_name is not None else 'qstat -Q -f -1'
         stdout = self.execute_command(command)
 
         result = {}
         try:
-            result["torque_queue"] = torque_utils.parse_queue_output(stdout)
+            result["queues"] = torque_utils.parse_queue_output(stdout)
         except Exception as err:
             self.ansible.fail_json(
-                    msg='Failed to parse qstat output',
-                    details=to_text(err),
+                msg='Failed to parse qstat output',
+                details=to_text(err),
             )
 
         self.ansible.exit_json(changed=False, **result)

@@ -10,27 +10,63 @@ ANSIBLE_METADATA = {
     'supported_by': 'community'
 }
 
-DOCUMENTATION = '''
----
+DOCUMENTATION = """
 module: slurm_job
-'''
+author:
+  - Alexander Maslennikov (@amaslenn)
+short_description: Manage Slurm jobs
+description:
+  - Create, suspend or cancel Slurm job.
+  - For more information, refer to the Slurm documentation at
+    U(https://slurm.schedmd.com/sbatch.html).
+version_added: 1.0.0
+seealso:
+  - module: sodalite.hpc.slurm_job_info
+extends_documentation_fragment:
+  - sodalite.hpc.job
+"""
 
-EXAMPLES = '''
+EXAMPLES = """
+- name: run the job
+  sodalite.hpc.slurm_job:
+  job_name: 'test'
+  node_count: 1
+  process_count_per_node: 1
+  job_contents: |
+                  sleep 60
+                  echo 'test'
+  keep_job_script: False
+  register: job_info
 
-'''
+- name: suspend the job
+  become: true
+  sodalite.hpc.slurm_job:
+  job_id: '{{ job_info.jobs[0].job_id }}'
+  state: 'paused'
 
-RETURN = '''
-slurm_job:
+- name: resume the job
+  become: true
+  sodalite.hpc.slurm_job:
+  job_id: '{{ job_info.jobs[0].job_id }}'
 
-'''
+- name: cancel the job
+  sodalite.hpc.slurm_job:
+  job_id: '{{ job_info.jobs[0].job_id }}'
+  state: 'cancelled'
+"""
+
+RETURN = """
+jobs:
+  description: List of Slurm jobs that has one element.
+  returned: success
+  type: list
+  elements: dict
+"""
+
 
 from ansible.module_utils._text import to_text
-from ansible_collections.sodalite.hpc.plugins.module_utils import (
-    slurm_utils
-)
-from ansible_collections.sodalite.hpc.plugins.module_utils.hpc_module import (
-    HpcJobModule
-)
+from ..module_utils import slurm_utils
+from ..module_utils.hpc_module import HpcJobModule
 
 
 class SlurmHpcJobModule(HpcJobModule):
@@ -61,13 +97,14 @@ class SlurmHpcJobModule(HpcJobModule):
         if params["process_count_per_node"]:
             file_contents.append(self.DIRECTIVE + ' --ntasks-per-node=' + str(params['process_count_per_node']))
         if params["core_count_per_process"]:
-            file_contents.append(self.DIRECTIVE + ' ----cpus-per-task=' + str(params['core_count_per_process']))
+            file_contents.append(self.DIRECTIVE + ' --cpus-per-task=' + str(params['core_count_per_process']))
         if params["memory_limit"]:
             file_contents.append(self.DIRECTIVE + ' --mem=' + params['memory_limit'])
         if params["minimum_memory_per_processor"]:
             file_contents.append(self.DIRECTIVE + ' --mem-per-cpu=' + params['minimum_memory_per_processor'])
         if params["request_gpus"]:
-            pass
+            # TODO unify GPU allocation
+            file_contents.append(self.DIRECTIVE + ' --gres=gpu:' + params['request_gpus'])
         if params["request_specific_nodes"]:
             file_contents.append(self.DIRECTIVE + ' --nodelist=' + params['request_specific_nodes'])
         if params["job_array"]:
@@ -85,6 +122,7 @@ class SlurmHpcJobModule(HpcJobModule):
         if params["copy_environment_variable"]:
             file_contents.append(self.DIRECTIVE + ' --export=' + params['copy_environment_variable'])
         if params["job_dependency"]:
+            # TODO transform job dependency input to job names
             file_contents.append(self.DIRECTIVE + ' --dependency=' + params['job_dependency'])
         if params["request_event_notification"]:
             # TODO
@@ -102,14 +140,14 @@ class SlurmHpcJobModule(HpcJobModule):
         return file_contents
 
     def create_job(self, filename):
-        stdout = self.execute_command('sbatch {}', filename)
+        stdout = self.execute_command('sbatch {0}', filename)
 
         try:
             job_id = slurm_utils.parse_job_output(stdout)
         except Exception as err:
             self.ansible.fail_json(
-                    msg='Failed to parse sbatch output',
-                    details=to_text(err),
+                msg='Failed to parse sbatch output',
+                details=to_text(err),
             )
 
         self.wait_state(job_id, ['PENDING', 'RUNNING'])
@@ -120,55 +158,55 @@ class SlurmHpcJobModule(HpcJobModule):
         state = self.get_job_state(job_id)
 
         if state in ['COMPLETED']:
-            return False, {"slurm_job": state}
+            return False, {"job": state}
 
-        self.execute_command('scancel {}', job_id)
+        self.execute_command('scancel {0}', job_id)
 
         new_state = self.wait_state(job_id, ['CANCELLED'])
 
-        return new_state != state, {"slurm_job": new_state}
+        return new_state != state, self.get_job_info(job_id)
 
     def pause_job(self, job_id):
         state = self.get_job_state(job_id)
 
         if state == 'RUNNING':
-            self.execute_command('scontrol suspend {}', job_id)
+            self.execute_command('scontrol suspend {0}', job_id)
         if state == 'PENDING':
-            self.execute_command('scontrol hold {}', job_id)
+            self.execute_command('scontrol hold {0}', job_id)
 
         new_state = self.wait_state(job_id, ['PENDING', 'SUSPENDED'])
 
-        return new_state != state, {"slurm_job": new_state}
+        return new_state != state, self.get_job_info(job_id)
 
     def resume_job(self, job_id):
         state = self.get_job_state(job_id)
 
         if state == 'PENDING':
-            self.execute_command('scontrol release {}', job_id)
+            self.execute_command('scontrol release {0}', job_id)
         if state == 'SUSPENDED':
-            self.execute_command('scontrol resume {}', job_id)
+            self.execute_command('scontrol resume {0}', job_id)
 
         new_state = self.wait_state(job_id, ['PENDING', 'RUNNING'])
 
-        return new_state != state, {"slurm_job": new_state}
+        return new_state != state, self.get_job_info(job_id)
 
     def get_job_state(self, job_id):
-        return self.get_job_info(job_id)["slurm_job"]["JobState"]
+        return self.get_job_info(job_id)["jobs"][0]["job_state"]
 
     def get_job_info(self, job_id):
-        stdout = self.execute_command('scontrol show job {}', job_id)
+        stdout = self.execute_command('scontrol show job {0}', job_id)
 
         result = {}
         try:
             job_info = slurm_utils.parse_output(stdout, "JobId")
         except Exception as err:
             self.ansible.fail_json(
-                    msg='Failed to parse scontrol output',
-                    details=to_text(err),
+                msg='Failed to parse scontrol output',
+                details=to_text(err),
             )
 
         if len(job_info) == 1:
-            result["slurm_job"] = job_info[0]
+            result["jobs"] = job_info
             return result
         else:
             self.ansible.fail_json(

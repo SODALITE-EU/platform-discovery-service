@@ -10,27 +10,50 @@ ANSIBLE_METADATA = {
     'supported_by': 'community'
 }
 
-DOCUMENTATION = '''
----
+DOCUMENTATION = """
 module: slurm_node_info
-'''
+author:
+  - Alexander Maslennikov (@amaslenn)
+short_description: List Slurm nodes
+description:
+  - Retrieve information about nodes on Slurm Workload Manager.
+  - For more information, refer to the Slurm documentation at
+    U(https://slurm.schedmd.com/scontrol.html).
+version_added: 1.0.0
+seealso:
+  - module: sodalite.hpc.slurm_partition_info
+options:
+  node:
+    type: str
+    description:
+      - Name of the node to retrieve.
+"""
 
-EXAMPLES = '''
+EXAMPLES = """
+- name: List all nodes
+  sodalite.hpc.slurm_node_info:
+  register: result
+- name: List the selected node
+  sodalite.hpc.slurm_node_info:
+    node: wn1
+  register: result
+- name: Show node
+  ansible.builtin.debug:
+    msg: "{{ result.nodes[0] }}"
+"""
 
-'''
+RETURN = """
+nodes:
+  description: List of Slurm nodes.
+  returned: success
+  type: list
+  elements: dict
+"""
 
-RETURN = '''
-slurm_node_info:
-
-'''
 
 from ansible.module_utils._text import to_text
-from ansible_collections.sodalite.hpc.plugins.module_utils import (
-    slurm_utils
-)
-from ansible_collections.sodalite.hpc.plugins.module_utils.hpc_module import (
-    HpcModule
-)
+from ..module_utils import slurm_utils
+from ..module_utils.hpc_module import HpcModule
 
 
 class SlurmHpcNodeInfoModule(HpcModule):
@@ -42,16 +65,16 @@ class SlurmHpcNodeInfoModule(HpcModule):
 
     def run_module(self):
         node_name = self.ansible.params['node']
-        command = 'scontrol show node {}'.format(node_name) if node_name is not None else 'scontrol show nodes'
+        command = 'scontrol show node {0}'.format(node_name) if node_name is not None else 'scontrol show nodes'
         stdout = self.execute_command(command)
 
         result = {}
         try:
-            result["slurm_node"] = slurm_utils.parse_output(stdout, "NodeName")
+            result["nodes"] = slurm_utils.parse_output(stdout, "NodeName")
         except Exception as err:
             self.ansible.fail_json(
-                    msg='Failed to parse scontrol output',
-                    details=to_text(err),
+                msg='Failed to parse scontrol output',
+                details=to_text(err),
             )
 
         self.ansible.exit_json(changed=False, **result)

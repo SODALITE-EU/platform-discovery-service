@@ -1,9 +1,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible_collections.sodalite.hpc.plugins.module_utils.hpc_action_plugin import (
-    HpcActionModule
-)
+from ..plugin_utils.hpc_action_plugin import HpcActionModule
 
 
 class ActionModule(HpcActionModule):

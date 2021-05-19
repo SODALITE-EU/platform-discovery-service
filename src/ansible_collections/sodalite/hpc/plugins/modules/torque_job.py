@@ -10,27 +10,60 @@ ANSIBLE_METADATA = {
     'supported_by': 'community'
 }
 
-DOCUMENTATION = '''
----
+DOCUMENTATION = """
 module: torque_job
-'''
+author:
+  - Alexander Maslennikov (@amaslenn)
+short_description: Manage Torque jobs
+description:
+  - Create, suspend or cancel Torque job.
+version_added: 1.0.0
+seealso:
+  - module: sodalite.hpc.torque_job_info
+extends_documentation_fragment:
+  - sodalite.hpc.job
+"""
 
-EXAMPLES = '''
+EXAMPLES = """
+- name: run the job
+  sodalite.hpc.torque_job:
+  job_name: 'test'
+  node_count: 1
+  process_count_per_node: 1
+  job_contents: |
+                  sleep 60
+                  echo 'test'
+  keep_job_script: False
+  register: job_info
 
-'''
+- name: suspend the job
+  become: true
+  sodalite.hpc.torque_job:
+  job_id: '{{ job_info.jobs[0].job_id }}'
+  state: 'paused'
 
-RETURN = '''
-torque_job:
+- name: resume the job
+  become: true
+  sodalite.hpc.torque_job:
+  job_id: '{{ job_info.jobs[0].job_id }}'
 
-'''
+- name: cancel the job
+  sodalite.hpc.torque_job:
+  job_id: '{{ job_info.jobs[0].job_id }}'
+  state: 'cancelled'
+"""
+
+RETURN = """
+jobs:
+  description: List of Torque jobs that has one element.
+  returned: success
+  type: list
+  elements: dict
+"""
 
 from ansible.module_utils._text import to_text
-from ansible_collections.sodalite.hpc.plugins.module_utils import (
-    torque_utils
-)
-from ansible_collections.sodalite.hpc.plugins.module_utils.hpc_module import (
-    HpcJobModule
-)
+from ..module_utils import torque_utils
+from ..module_utils.hpc_module import HpcJobModule
 
 
 class TorqueHpcJobModule(HpcJobModule):
@@ -68,19 +101,21 @@ class TorqueHpcJobModule(HpcJobModule):
         if self.ansible.params["core_count_per_process"]:
             pass
         if self.ansible.params["memory_limit"]:
+            # TODO unify memory inputs
             file_contents.append(self.DIRECTIVE + ' -l mem=' + self.ansible.params['memory_limit'])
         if self.ansible.params["minimum_memory_per_processor"]:
             file_contents.append(self.DIRECTIVE + ' -l pmem=' + self.ansible.params['minimum_memory_per_processor'])
         if self.ansible.params["request_specific_nodes"]:
             file_contents.append(self.DIRECTIVE + ' -l nodes=' + self.ansible.params['request_specific_nodes'])
         if self.ansible.params["job_array"]:
+            # TODO parse job array output
             file_contents.append(self.DIRECTIVE + ' -t ' + self.ansible.params['job_array'])
         if self.ansible.params["standard_output_file"]:
             file_contents.append(self.DIRECTIVE + ' -o ' + self.ansible.params['standard_output_file'])
         if self.ansible.params["standard_error_file"]:
             file_contents.append(self.DIRECTIVE + ' -e ' + self.ansible.params['standard_error_file'])
         if self.ansible.params["combine_stdout_stderr"]:
-            file_contents.append(self.DIRECTIVE + ' -j oe' + self.ansible.params['standard_error_file'])
+            file_contents.append(self.DIRECTIVE + ' -j oe')
         if self.ansible.params["architecture_constraint"]:
             file_contents.append(self.DIRECTIVE + ' -l partition=' + self.ansible.params['architecture_constraint'])
         if self.ansible.params["copy_environment"]:
@@ -95,6 +130,7 @@ class TorqueHpcJobModule(HpcJobModule):
         if self.ansible.params["email_address"]:
             file_contents.append(self.DIRECTIVE + ' -M ' + self.ansible.params['email_address'])
         if self.ansible.params["defer_job"]:
+            # TODO unify time inputs
             file_contents.append(self.DIRECTIVE + ' -a ' + self.ansible.params['defer_job'])
         if self.ansible.params["node_exclusive"]:
             file_contents.append(self.DIRECTIVE + ' -l naccesspolicy=singlejob')
@@ -111,8 +147,8 @@ class TorqueHpcJobModule(HpcJobModule):
             job_id = stdout
         except Exception as err:
             self.ansible.fail_json(
-                    msg='Failed to parse sbatch output',
-                    details=to_text(err),
+                msg='Failed to parse sbatch output',
+                details=to_text(err),
             )
 
         self.wait_state(job_id, ['W', 'R'])
@@ -120,49 +156,56 @@ class TorqueHpcJobModule(HpcJobModule):
         return True, self.get_job_info(job_id)
 
     def delete_job(self, job_id):
-        state = self.get_job_state( job_id)
+        state = self.get_job_state(job_id)
 
         if state in ['C']:
             return False, {"torque_job": state}
 
-        self.execute_command('qdel {}', job_id)
+        self.execute_command('qdel {0}', job_id)
 
         new_state = self.wait_state(job_id, ['C'])
 
-        return new_state != state, {"torque_job": new_state}
+        return new_state != state, self.get_job_info(job_id)
 
     def pause_job(self, job_id):
         state = self.get_job_state(job_id)
 
-        self.execute_command('qhold {}', job_id)
+        self.execute_command('qhold {0}', job_id)
 
         new_state = self.wait_state(job_id, ['W', 'H'])
 
-        return new_state != state, {"torque_job": new_state}
+        return new_state != state, self.get_job_info(job_id)
 
     def resume_job(self, job_id):
         state = self.get_job_state(job_id)
 
-        self.execute_command('qrls {}', job_id)
+        self.execute_command('qrls {0}', job_id)
 
         new_state = self.wait_state(job_id, ['W', 'R'])
 
-        return new_state != state, {"torque_job": new_state}
+        return new_state != state, self.get_job_info(job_id)
 
     def get_job_state(self, job_id):
-        return self.get_job_info(job_id)["torque_job"]["job_state"].upper()
+        return self.get_job_info(job_id)["jobs"][0]["job_state"].upper()
 
     def get_job_info(self, job_id):
-        stdout = self.execute_command('qstat -f {}', job_id)
+        stdout = self.execute_command('qstat -f {0}', job_id)
 
         result = {}
         try:
-            result["torque_job"] = torque_utils.parse_job_output(stdout)
-            return result
+            job_info = torque_utils.parse_job_output(stdout)
         except Exception as err:
             self.ansible.fail_json(
-                    msg='Failed to parse qstat output',
-                    details=to_text(err),
+                msg='Failed to parse qstat output',
+                details=to_text(err),
+            )
+
+        if len(job_info) == 1:
+            result["jobs"] = job_info
+            return result
+        else:
+            self.ansible.fail_json(
+                msg="Incorrect job status output"
             )
 
 

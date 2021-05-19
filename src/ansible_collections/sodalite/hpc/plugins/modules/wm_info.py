@@ -10,24 +10,32 @@ ANSIBLE_METADATA = {
     'supported_by': 'community'
 }
 
-DOCUMENTATION = '''
----
-module: torque_node_info
-'''
+DOCUMENTATION = """
+module: wm_info
+author:
+  - Alexander Maslennikov (@amaslenn)
+short_description: List workload manager types
+description:
+  - Retrieve information about workload managers available.
+version_added: 1.0.0
+"""
 
-EXAMPLES = '''
+EXAMPLES = """
+- name: Get workload manages
+  sodalite.hpc.wm_info:
+  register: result
+"""
 
-'''
-
-RETURN = '''
-torque_node_info:
-
-'''
+RETURN = """
+wm_type:
+  description: List of workload managers.
+  returned: success
+  type: list
+  elements: str
+"""
 
 from ansible.module_utils._text import to_text
-from ansible_collections.sodalite.hpc.plugins.module_utils.hpc_module import (
-    HpcModule
-)
+from ..module_utils.hpc_module import HpcModule
 
 
 class WmInfoModule(HpcModule):
@@ -44,7 +52,7 @@ class WmInfoModule(HpcModule):
 
         if not torque_stdout and slurm_stdout:
             self.ansible.fail_json(
-                    msg='Could not detect any workload manager.'
+                msg='Could not detect any workload manager.'
             )
         result = {}
         result["wm_type"] = []

@@ -1,3 +1,10 @@
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
+import xmltodict
+import json
+
+
 class FilterModule(object):
 
     def filters(self):
@@ -6,5 +13,4 @@ class FilterModule(object):
         }
 
     def xml2json(self, value):
-        import xmltodict, json
         return json.dumps(xmltodict.parse(value))

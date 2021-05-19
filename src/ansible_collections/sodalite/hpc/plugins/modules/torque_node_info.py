@@ -10,27 +10,48 @@ ANSIBLE_METADATA = {
     'supported_by': 'community'
 }
 
-DOCUMENTATION = '''
----
+DOCUMENTATION = """
 module: torque_node_info
-'''
+author:
+  - Alexander Maslennikov (@amaslenn)
+short_description: List Torque nodes
+description:
+  - Retrieve information about nodes on Torque Workload Manager.
+version_added: 1.0.0
+seealso:
+  - module: sodalite.hpc.torque_queue_info
+options:
+  node:
+    type: str
+    description:
+      - Name of the node to retrieve.
+"""
 
-EXAMPLES = '''
+EXAMPLES = """
+- name: List all nodes
+  sodalite.hpc.torque_node_info:
+  register: result
+- name: List the selected node
+  sodalite.hpc.torque_node_info:
+    node: node-6.novalocal
+  register: result
+- name: Show node state
+  ansible.builtin.debug:
+    msg: "{{ result.nodes[0].power_state }}"
+"""
 
-'''
+RETURN = """
+nodes:
+  description: List of Torque nodes.
+  returned: success
+  type: list
+  elements: dict
+"""
 
-RETURN = '''
-torque_node_info:
-
-'''
 
 from ansible.module_utils._text import to_text
-from ansible_collections.sodalite.hpc.plugins.module_utils import (
-    torque_utils
-)
-from ansible_collections.sodalite.hpc.plugins.module_utils.hpc_module import (
-    HpcModule
-)
+from ..module_utils import torque_utils
+from ..module_utils.hpc_module import HpcModule
 
 
 class TorqueHpcNodeInfoModule(HpcModule):
@@ -42,7 +63,7 @@ class TorqueHpcNodeInfoModule(HpcModule):
 
     def run_module(self):
         node_name = self.ansible.params['node']
-        command = 'pbsnodes {}'.format(node_name) if node_name is not None else 'pbsnodes'
+        command = 'pbsnodes {0}'.format(node_name) if node_name is not None else 'pbsnodes'
         stdout = self.execute_command(command)
 
         result = {}
@@ -50,8 +71,8 @@ class TorqueHpcNodeInfoModule(HpcModule):
             result["torque_node"] = torque_utils.parse_node_output(stdout)
         except Exception as err:
             self.ansible.fail_json(
-                    msg='Failed to parse pbsnodes output',
-                    details=to_text(err),
+                msg='Failed to parse pbsnodes output',
+                details=to_text(err),
             )
 
         self.ansible.exit_json(changed=False, **result)

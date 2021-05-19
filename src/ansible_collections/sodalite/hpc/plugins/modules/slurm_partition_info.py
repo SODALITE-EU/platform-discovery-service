@@ -10,27 +10,50 @@ ANSIBLE_METADATA = {
     'supported_by': 'community'
 }
 
-DOCUMENTATION = '''
----
+DOCUMENTATION = """
 module: slurm_partition_info
-'''
+author:
+  - Alexander Maslennikov (@amaslenn)
+short_description: List Slurm partitions
+description:
+  - Retrieve information about partitions on Slurm Workload Manager.
+  - For more information, refer to the Slurm documentation at
+    U(https://slurm.schedmd.com/scontrol.html).
+version_added: 1.0.0
+seealso:
+  - module: sodalite.hpc.slurm_node_info
+options:
+  partition:
+    type: str
+    description:
+      - Name of the partition to retrieve.
+"""
 
-EXAMPLES = '''
+EXAMPLES = """
+- name: List all partitions
+  sodalite.hpc.slurm_partition_info:
+  register: result
+- name: List the selected partition
+  sodalite.hpc.slurm_partition_info:
+    partition: test
+  register: result
+- name: Show partition
+  ansible.builtin.debug:
+    msg: "{{ result.partitions[0] }}"
+"""
 
-'''
+RETURN = """
+partitions:
+  description: List of Slurm partitions (queues).
+  returned: success
+  type: list
+  elements: dict
+"""
 
-RETURN = '''
-slurm_partition_info:
-
-'''
 
 from ansible.module_utils._text import to_text
-from ansible_collections.sodalite.hpc.plugins.module_utils import (
-    slurm_utils
-)
-from ansible_collections.sodalite.hpc.plugins.module_utils.hpc_module import (
-    HpcModule
-)
+from ..module_utils import slurm_utils
+from ..module_utils.hpc_module import HpcModule
 
 
 class SlurmHpcPartitionInfoModule(HpcModule):
@@ -42,16 +65,16 @@ class SlurmHpcPartitionInfoModule(HpcModule):
 
     def run_module(self):
         partition_name = self.ansible.params['partition']
-        command = 'scontrol show partition {}'.format(partition_name) if partition_name is not None else 'scontrol show partition'
+        command = 'scontrol show partition {0}'.format(partition_name) if partition_name is not None else 'scontrol show partition'
         stdout = self.execute_command(command)
 
         result = {}
         try:
-            result["slurm_partition"] = slurm_utils.parse_output(stdout, "PartitionName")
+            result["partitions"] = slurm_utils.parse_output(stdout, "PartitionName")
         except Exception as err:
             self.ansible.fail_json(
-                    msg='Failed to parse scontrol output',
-                    details=to_text(err),
+                msg='Failed to parse scontrol output',
+                details=to_text(err),
             )
 
         self.ansible.exit_json(changed=False, **result)

@@ -1,3 +1,6 @@
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 from time import sleep
 from abc import abstractmethod
 from ansible.module_utils.basic import AnsibleModule
@@ -21,13 +24,13 @@ class HpcModule(object):
             stdin, stdout, stderr = self.ansible.run_command(command)
             if stdin != 0:
                 self.ansible.fail_json(
-                        msg='{} command returned an error'.format(command),
-                        details=to_text(stderr),
+                    msg='{0} command returned an error'.format(command),
+                    details=to_text(stderr),
                 )
         except Exception as err:
             self.ansible.fail_json(
-                    msg='Failed to execute {} command'.format(command),
-                    details=to_text(err),
+                msg='Failed to execute {0} command'.format(command),
+                details=to_text(err),
             )
 
         return stdout
@@ -64,15 +67,15 @@ class HpcJobModule(HpcModule):
             job_array=dict(type='str', required=False),
             standard_output_file=dict(type='str', required=False),
             standard_error_file=dict(type='str', required=False),
-            combine_stdout_stderr=dict(type='str', required=False),
+            combine_stdout_stderr=dict(type='bool', required=False),
             architecture_constraint=dict(type='str', required=False),
-            copy_environment=dict(type='str', required=False),
+            copy_environment=dict(type='bool', required=False),
             copy_environment_variable=dict(type='str', required=False),
             job_dependency=dict(type='str', required=False),
             request_event_notification=dict(type='str', required=False),
             email_address=dict(type='str', required=False),
             defer_job=dict(type='str', required=False),
-            node_exclusive=dict(type='str', required=False),
+            node_exclusive=dict(type='bool', required=False),
             keep_job_script=dict(type='bool', default=True)
         )
 
@@ -119,7 +122,7 @@ class HpcJobModule(HpcModule):
         if state == 'queued':
             if self.ansible.params["job_name"]:
                 contents = self.prepare_file()
-                filename = self.write_file("{}.torque".format(self.ansible.params["job_name"]), contents)
+                filename = self.write_file("{0}.torque".format(self.ansible.params["job_name"]), contents)
                 changed, result = self.create_job(filename)
                 if not self.ansible.params["keep_job_script"]:
                     self.ansible.add_cleanup_file(filename)
