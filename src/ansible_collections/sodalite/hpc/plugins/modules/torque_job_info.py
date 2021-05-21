@@ -70,7 +70,7 @@ class TorqueHpcJobInfoModule(HpcModule):
 
         result = {}
         try:
-            result["torque_job"] = torque_utils.parse_job_output(stdout)
+            result["jobs"] = torque_utils.parse_job_output(stdout)
         except Exception as err:
             self.ansible.fail_json(
                 msg='Failed to parse qstat output',

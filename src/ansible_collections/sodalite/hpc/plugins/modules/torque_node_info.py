@@ -68,7 +68,7 @@ class TorqueHpcNodeInfoModule(HpcModule):
 
         result = {}
         try:
-            result["torque_node"] = torque_utils.parse_node_output(stdout)
+            result["nodes"] = torque_utils.parse_node_output(stdout)
         except Exception as err:
             self.ansible.fail_json(
                 msg='Failed to parse pbsnodes output',

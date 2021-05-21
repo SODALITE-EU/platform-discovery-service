@@ -159,7 +159,7 @@ class TorqueHpcJobModule(HpcJobModule):
         state = self.get_job_state(job_id)
 
         if state in ['C']:
-            return False, {"torque_job": state}
+            return False, self.get_job_info(job_id)
 
         self.execute_command('qdel {0}', job_id)
 
