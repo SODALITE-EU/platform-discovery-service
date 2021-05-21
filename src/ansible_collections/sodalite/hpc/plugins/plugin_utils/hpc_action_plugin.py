@@ -23,7 +23,7 @@ class HpcActionModule(ActionBase):
                                        tmp=tmp)
         display.debug("Facts %s" % wm_info)
 
-        if not wm_info:
+        if not wm_info or "wm_type" not in wm_info:
             raise AnsibleActionFail('Could not detect any workload manager to use')
 
         if "Slurm" in wm_info["wm_type"]:
