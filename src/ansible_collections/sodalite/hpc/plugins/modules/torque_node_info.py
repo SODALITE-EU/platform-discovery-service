@@ -54,12 +54,12 @@ from ..module_utils import torque_utils
 from ..module_utils.hpc_module import HpcModule
 
 
-class TorqueHpcNodeInfoModule(HpcModule):
+class TorqueNodeInfoModule(HpcModule):
     def __init__(self):
         self.argument_spec = dict(
             node=dict(type='str', required=False)
         )
-        super(TorqueHpcNodeInfoModule, self).__init__()
+        super(TorqueNodeInfoModule, self).__init__()
 
     def run_module(self):
         node_name = self.ansible.params['node']
@@ -79,7 +79,7 @@ class TorqueHpcNodeInfoModule(HpcModule):
 
 
 def main():
-    module = TorqueHpcNodeInfoModule()
+    module = TorqueNodeInfoModule()
     module.run_module()
 
 

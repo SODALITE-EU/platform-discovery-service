@@ -53,12 +53,12 @@ from ..module_utils import torque_utils
 from ..module_utils.hpc_module import HpcModule
 
 
-class TorqueHpcQueueInfoModule(HpcModule):
+class TorqueQueueInfoModule(HpcModule):
     def __init__(self):
         self.argument_spec = dict(
             queue=dict(type='str', required=False)
         )
-        super(TorqueHpcQueueInfoModule, self).__init__()
+        super(TorqueQueueInfoModule, self).__init__()
 
     def run_module(self):
         queue_name = self.ansible.params['queue']
@@ -78,7 +78,7 @@ class TorqueHpcQueueInfoModule(HpcModule):
 
 
 def main():
-    module = TorqueHpcQueueInfoModule()
+    module = TorqueQueueInfoModule()
     module.run_module()
 
 

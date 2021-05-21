@@ -56,12 +56,12 @@ from ..module_utils import slurm_utils
 from ..module_utils.hpc_module import HpcModule
 
 
-class SlurmHpcNodeInfoModule(HpcModule):
+class SlurmNodeInfoModule(HpcModule):
     def __init__(self):
         self.argument_spec = dict(
             node=dict(type='str', required=False)
         )
-        super(SlurmHpcNodeInfoModule, self).__init__()
+        super(SlurmNodeInfoModule, self).__init__()
 
     def run_module(self):
         node_name = self.ansible.params['node']
@@ -81,7 +81,7 @@ class SlurmHpcNodeInfoModule(HpcModule):
 
 
 def main():
-    module = SlurmHpcNodeInfoModule()
+    module = SlurmNodeInfoModule()
     module.run_module()
 
 

@@ -54,12 +54,12 @@ from ..module_utils import torque_utils
 from ..module_utils.hpc_module import HpcModule
 
 
-class TorqueHpcJobInfoModule(HpcModule):
+class TorqueJobInfoModule(HpcModule):
     def __init__(self):
         self.argument_spec = dict(
             job_id=dict(type='str', required=False)
         )
-        super(TorqueHpcJobInfoModule, self).__init__()
+        super(TorqueJobInfoModule, self).__init__()
 
     def run_module(self):
         job_id = self.ansible.params['job_id']
@@ -80,7 +80,7 @@ class TorqueHpcJobInfoModule(HpcModule):
 
 
 def main():
-    module = TorqueHpcJobInfoModule()
+    module = TorqueJobInfoModule()
     module.run_module()
 
 

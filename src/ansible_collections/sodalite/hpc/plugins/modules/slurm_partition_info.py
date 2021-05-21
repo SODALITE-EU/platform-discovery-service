@@ -56,12 +56,12 @@ from ..module_utils import slurm_utils
 from ..module_utils.hpc_module import HpcModule
 
 
-class SlurmHpcPartitionInfoModule(HpcModule):
+class SlurmPartitionInfoModule(HpcModule):
     def __init__(self):
         self.argument_spec = dict(
             partition=dict(type='str', required=False)
         )
-        super(SlurmHpcPartitionInfoModule, self).__init__()
+        super(SlurmPartitionInfoModule, self).__init__()
 
     def run_module(self):
         partition_name = self.ansible.params['partition']
@@ -81,7 +81,7 @@ class SlurmHpcPartitionInfoModule(HpcModule):
 
 
 def main():
-    module = SlurmHpcPartitionInfoModule()
+    module = SlurmPartitionInfoModule()
     module.run_module()
 
 

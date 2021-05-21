@@ -55,12 +55,12 @@ from ..module_utils import slurm_utils
 from ..module_utils.hpc_module import HpcModule
 
 
-class SlurmHpcJobInfoModule(HpcModule):
+class SlurmJobInfoModule(HpcModule):
     def __init__(self):
         self.argument_spec = dict(
             job_id=dict(type='str', required=False)
         )
-        super(SlurmHpcJobInfoModule, self).__init__()
+        super(SlurmJobInfoModule, self).__init__()
 
     def run_module(self):
         job_id = self.ansible.params['job_id']
@@ -84,7 +84,7 @@ class SlurmHpcJobInfoModule(HpcModule):
 
 
 def main():
-    module = SlurmHpcJobInfoModule()
+    module = SlurmJobInfoModule()
     module.run_module()
 
 
