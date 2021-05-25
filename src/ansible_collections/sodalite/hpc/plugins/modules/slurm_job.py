@@ -71,7 +71,7 @@ from ..module_utils.hpc_module import HpcJobModule
 
 class SlurmJobModule(HpcJobModule):
     def __init__(self):
-        super(SlurmJobModule, self).__init__('#SBATCH')
+        super(SlurmJobModule, self).__init__('#SBATCH', "slurm")
 
     def prepare_file(self):
         params = self.ansible.params

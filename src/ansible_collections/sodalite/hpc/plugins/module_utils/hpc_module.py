@@ -45,14 +45,16 @@ class HpcModule(object):
 
 
 class HpcJobModule(HpcModule):
-    def __init__(self, directive):
+    def __init__(self, directive, job_file_ext):
         self.DIRECTIVE = directive
+        self.job_file_ext = job_file_ext
         self.argument_spec = dict(
             job_id=dict(type='str', required=False),
             state=dict(default='queued', choices=['queued', 'paused', 'cancelled']),
             job_name=dict(type='str', required=False),
             job_options=dict(type='str', required=False),
             job_contents=dict(type='str', required=False),
+            job_workspace=dict(type='str', required=False),
             account=dict(type='str', required=False),
             queue=dict(type='str', required=False),
             wall_time_limit=dict(type='str', required=False),
@@ -94,8 +96,11 @@ class HpcJobModule(HpcModule):
         msg = "Timeout of {1} seconds exceeded while waiting for job '{0}'. State {2}"
         self.ansible.fail_json(msg=msg.format(job_id, max_wait, state))
 
-    def write_file(self, filename, contents):
-        filename = os.path.expandvars(os.path.expanduser(filename))
+    def write_file(self, workspace, filename, contents):
+        if workspace:
+            filename = os.path.join(workspace, filename)
+        else:
+            filename = os.path.expandvars(os.path.expanduser(filename))
         fh = open(filename, 'w')
         fh.writelines(line + '\n' for line in contents)
         fh.close()
@@ -122,7 +127,10 @@ class HpcJobModule(HpcModule):
         if state == 'queued':
             if self.ansible.params["job_name"]:
                 contents = self.prepare_file()
-                filename = self.write_file("{0}.torque".format(self.ansible.params["job_name"]), contents)
+                filename = self.write_file(self.ansible.params["job_workspace"],
+                                           "{0}.{1}".format(self.ansible.params["job_name"],
+                                                            self.job_file_ext),
+                                           contents)
                 changed, result = self.create_job(filename)
                 if not self.ansible.params["keep_job_script"]:
                     self.ansible.add_cleanup_file(filename)

@@ -29,6 +29,10 @@ options:
     description:
       - Contents of the job.
     type: str
+  job_workspace:
+    description:
+      - Location of the sources and the job script.
+    type: str
   account:
     description:
       - Charge resources used by this job to specified account.

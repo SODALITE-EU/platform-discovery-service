@@ -68,7 +68,7 @@ from ..module_utils.hpc_module import HpcJobModule
 
 class TorqueJobModule(HpcJobModule):
     def __init__(self):
-        super(TorqueJobModule, self).__init__('#PBS')
+        super(TorqueJobModule, self).__init__('#PBS', "torque")
 
     def prepare_file(self):
         file_contents = []

@@ -29,7 +29,7 @@ class TestSlurmJobModule(TestHPCModule):
             assert result.value.args[0]['jobs'][0]['job_id'] == '70'
             assert result.value.args[0]['jobs'][0]['job_state'] == 'RUNNING'
 
-        mock_run_command.assert_has_calls([call("sbatch my_job.torque"),
+        mock_run_command.assert_has_calls([call("sbatch my_job.slurm"),
                                            call("scontrol show job 70"),
                                            call("scontrol show job 70")])
 
@@ -112,7 +112,7 @@ class TestSlurmJobModule(TestHPCModule):
             assert result.value.args[0]['failed'] is True
             assert result.value.args[0]['msg'] == "Failed to execute scontrol show job 70 command"
 
-        mock_run_command.assert_has_calls([call("sbatch my_job.torque"),
+        mock_run_command.assert_has_calls([call("sbatch my_job.slurm"),
                                            call("scontrol show job 70"),
                                            call("scontrol show job 70")])
 
