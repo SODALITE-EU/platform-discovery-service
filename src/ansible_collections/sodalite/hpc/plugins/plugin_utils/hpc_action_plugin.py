@@ -25,14 +25,14 @@ class HpcActionModule(ActionBase):
 
         if not wm_info or "wm_type" not in wm_info:
             raise AnsibleActionFail('Could not detect any workload manager to use')
-
+        wrap_async = self._task.async_val
         if "Slurm" in wm_info["wm_type"]:
             return self._execute_module(module_name=slurm_module_name,
                                         module_args=module_args,
-                                        task_vars=task_vars, tmp=tmp)
+                                        task_vars=task_vars, tmp=tmp, wrap_async=wrap_async)
         if "Torque" in wm_info["wm_type"]:
             return self._execute_module(module_name=torque_module_name,
                                         module_args=module_args,
-                                        task_vars=task_vars, tmp=tmp)
+                                        task_vars=task_vars, tmp=tmp, wrap_async=wrap_async)
 
         raise AnsibleActionFail('Unsupported workload manager')
