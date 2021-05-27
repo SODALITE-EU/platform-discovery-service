@@ -92,7 +92,7 @@ class TorqueJobModule(HpcJobModule):
                 node_directive += ':ppn=' + str(self.ansible.params['process_count_per_node'])
             if self.ansible.params["request_gpus"]:
                 # TODO
-                node_directive += ':gpus=' + str(self.ansible.params['request_gpus'])
+                node_directive += ',gpus=' + str(self.ansible.params['request_gpus'])
             if self.ansible.params["queue"]:
                 node_directive += ':' + str(self.ansible.params['queue'])
             file_contents.append(node_directive)
