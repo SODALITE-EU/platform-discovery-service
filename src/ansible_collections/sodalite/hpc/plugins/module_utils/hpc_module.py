@@ -11,11 +11,12 @@ import os
 
 class HpcModule(object):
 
-    argument_spec = {}
     module_kwargs = {}
 
-    def __init__(self):
-        self.ansible = AnsibleModule(argument_spec=self.argument_spec,
+    def __init__(self, argument_spec, mutually_exclusive=None, required_one_of=None):
+        self.ansible = AnsibleModule(argument_spec=argument_spec,
+                                     mutually_exclusive=mutually_exclusive,
+                                     required_one_of=required_one_of,
                                      **self.module_kwargs)
 
     def execute_command(self, command, *args):
@@ -48,7 +49,7 @@ class HpcJobModule(HpcModule):
     def __init__(self, directive, job_file_ext):
         self.DIRECTIVE = directive
         self.job_file_ext = job_file_ext
-        self.argument_spec = dict(
+        argument_spec = dict(
             job_id=dict(type='str', required=False),
             state=dict(default='queued', choices=['queued', 'paused', 'cancelled']),
             job_name=dict(type='str', required=False),
@@ -86,7 +87,16 @@ class HpcJobModule(HpcModule):
             keep_job_script=dict(type='bool', default=True)
         )
 
-        super(HpcJobModule, self).__init__()
+        mutually_exclusive = [
+            ('job_id', 'job_name'),
+            ('job_src', 'job_contents'),
+        ]
+
+        required_one_of = [
+            ('job_id', 'job_name')
+        ]
+
+        super(HpcJobModule, self).__init__(argument_spec, mutually_exclusive, required_one_of)
 
     def wait_state(self, job_id, states):
         delay = 1.0

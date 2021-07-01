@@ -56,10 +56,10 @@ from ..module_utils.hpc_module import HpcModule
 
 class TorqueNodeInfoModule(HpcModule):
     def __init__(self):
-        self.argument_spec = dict(
+        argument_spec = dict(
             node=dict(type='str', required=False)
         )
-        super(TorqueNodeInfoModule, self).__init__()
+        super(TorqueNodeInfoModule, self).__init__(argument_spec)
 
     def run_module(self):
         node_name = self.ansible.params['node']

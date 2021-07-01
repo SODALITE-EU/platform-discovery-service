@@ -40,8 +40,7 @@ from ..module_utils.hpc_module import HpcModule
 
 class WmInfoModule(HpcModule):
     def __init__(self):
-        self.argument_spec = dict()
-        super(WmInfoModule, self).__init__()
+        super(WmInfoModule, self).__init__(dict())
 
     def run_module(self):
         torque_stdin, torque_stdout, torque_stderr = self.ansible.run_command("command -v qsub")
