@@ -53,6 +53,7 @@ class HpcJobModule(HpcModule):
             state=dict(default='queued', choices=['queued', 'paused', 'cancelled']),
             job_name=dict(type='str', required=False),
             job_options=dict(type='str', required=False),
+            job_src=dict(type='str', required=False),
             job_contents=dict(type='str', required=False),
             job_workspace=dict(type='str', required=False),
             account=dict(type='str', required=False),

@@ -29,6 +29,10 @@ options:
     description:
       - Contents of the job.
     type: str
+  job_src:
+    description:
+      - Local path to the job script file.
+    type: str
   job_workspace:
     description:
       - Location of the sources and the job script.
