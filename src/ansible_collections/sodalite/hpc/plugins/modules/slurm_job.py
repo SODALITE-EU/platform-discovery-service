@@ -70,6 +70,17 @@ from ..module_utils.hpc_module import HpcJobModule
 
 
 class SlurmJobModule(HpcJobModule):
+
+    NOTIFICATIONS = {
+        "none": "NONE",
+        "begin": "BEGIN",
+        "end": "END",
+        "fail": "FAIL",
+        "all": "ALL",
+        "invalid_depend": "INVALID_DEPEND",
+        "time_limit": "TIME_LIMIT"
+    }
+
     def __init__(self):
         super(SlurmJobModule, self).__init__('#SBATCH', "slurm")
 
@@ -125,8 +136,7 @@ class SlurmJobModule(HpcJobModule):
             # TODO transform job dependency input to job names
             file_contents.append(self.DIRECTIVE + ' --dependency=' + params['job_dependency'])
         if params["request_event_notification"]:
-            # TODO
-            pass
+            file_contents.append(self.DIRECTIVE + ' --mail-type=' + self.convert_notifications(params['request_event_notification']))
         if params["email_address"]:
             file_contents.append(self.DIRECTIVE + ' --mail-user=' + params['email_address'])
         if params["defer_job"]:
@@ -138,6 +148,10 @@ class SlurmJobModule(HpcJobModule):
         if params["job_contents"]:
             file_contents.append(params['job_contents'])
         return file_contents
+
+    def convert_notifications(self, notifications):
+        result = ",".join([self.NOTIFICATIONS[opt] for opt in notifications])
+        return result
 
     def create_job(self, filename):
         stdout = self.execute_command('sbatch {0}', filename)

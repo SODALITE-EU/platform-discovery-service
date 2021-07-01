@@ -75,7 +75,11 @@ class HpcJobModule(HpcModule):
             copy_environment=dict(type='bool', required=False),
             copy_environment_variable=dict(type='str', required=False),
             job_dependency=dict(type='str', required=False),
-            request_event_notification=dict(type='str', required=False),
+            request_event_notification=dict(
+                type='list',
+                elements="str",
+                default='none',
+                choices=['begin', 'end', 'fail', 'invalid_depend', 'time_limit', 'none', 'all']),
             email_address=dict(type='str', required=False),
             defer_job=dict(type='str', required=False),
             node_exclusive=dict(type='bool', required=False),

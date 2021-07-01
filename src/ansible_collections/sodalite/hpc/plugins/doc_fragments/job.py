@@ -116,7 +116,10 @@ options:
   request_event_notification:
     description:
       - Notify user by email when certain event types occur.
-    type: str
+    type: list
+    elements: str
+    default: 'none'
+    choices: ['begin', 'end', 'fail', 'invalid_depend', 'time_limit', 'none', 'all']
   email_address:
     description:
       - Email address to receive notifications of state changes.

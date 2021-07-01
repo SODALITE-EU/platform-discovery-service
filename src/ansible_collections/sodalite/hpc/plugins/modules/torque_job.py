@@ -67,10 +67,22 @@ from ..module_utils.hpc_module import HpcJobModule
 
 
 class TorqueJobModule(HpcJobModule):
+
+    NOTIFICATIONS = {
+        "none": "p",
+        "begin": "b",
+        "end": "e",
+        "fail": "f",
+        "all": "a",
+        "invalid_depend": "a",
+        "time_limit": "a"
+    }
+
     def __init__(self):
         super(TorqueJobModule, self).__init__('#PBS', "torque")
 
     def prepare_file(self):
+        params = self.ansible.params
         file_contents = []
         file_contents.append(self.DIRECTIVE + ' -S ' + '/bin/bash')
         file_contents.append('## START OF HEADER ##')
@@ -125,8 +137,7 @@ class TorqueJobModule(HpcJobModule):
         if self.ansible.params["job_dependency"]:
             file_contents.append(self.DIRECTIVE + ' -W ' + self.ansible.params['job_dependency'])
         if self.ansible.params["request_event_notification"]:
-            # TODO
-            pass
+            file_contents.append(self.DIRECTIVE + ' -m ' + self.convert_notifications(params['request_event_notification']))
         if self.ansible.params["email_address"]:
             file_contents.append(self.DIRECTIVE + ' -M ' + self.ansible.params['email_address'])
         if self.ansible.params["defer_job"]:
@@ -139,6 +150,10 @@ class TorqueJobModule(HpcJobModule):
         if self.ansible.params["job_contents"]:
             file_contents.append(self.ansible.params['job_contents'])
         return file_contents
+
+    def convert_notifications(self, notifications):
+        result = "".join([self.NOTIFICATIONS[opt] for opt in notifications])
+        return result
 
     def create_job(self, filename):
         stdout = self.execute_command('qsub {}', filename)
