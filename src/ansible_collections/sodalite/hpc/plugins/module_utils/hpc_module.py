@@ -121,6 +121,16 @@ class HpcJobModule(HpcModule):
         fh.close()
         return filename
 
+    def read_local_file(self, path):
+        if not os.path.isfile(path):
+            self.ansible.fail_json(
+                msg="Source %s not found" % (path)
+            )
+        fh = open(path, 'r')
+        lines = fh.readlines()
+        fh.close()
+        return lines
+
     def run_module(self):
         state = self.ansible.params['state']
 

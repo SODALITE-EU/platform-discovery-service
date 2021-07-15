@@ -66,6 +66,7 @@ jobs:
 
 from ansible.module_utils._text import to_text
 from ..module_utils import slurm_utils
+from ..module_utils import date_utils
 from ..module_utils.hpc_module import HpcJobModule
 
 
@@ -100,6 +101,10 @@ class SlurmJobModule(HpcJobModule):
         if params["queue"]:
             file_contents.append(self.DIRECTIVE + ' --partition=' + params['queue'])
         if params["wall_time_limit"]:
+            if not date_utils.validate(params['wall_time_limit']):
+                self.ansible.fail_json(
+                    msg="Incorrect 'wall_time_limit' parameter format"
+                )
             file_contents.append(self.DIRECTIVE + ' --time=' + params['wall_time_limit'])
         if params["node_count"]:
             file_contents.append(self.DIRECTIVE + ' -N ' + str(params['node_count']))
@@ -143,7 +148,9 @@ class SlurmJobModule(HpcJobModule):
             file_contents.append(self.DIRECTIVE + ' --begin=' + params['defer_job'])
         if params["node_exclusive"]:
             file_contents.append(self.DIRECTIVE + ' --exclusive')
-
+        if params["job_options"]:
+            file_contents.append('## USER DEFINED OPTIONS ## ')
+            file_contents.append(params['job_options'])
         file_contents.append('## END OF HEADER ## ')
         if params["job_contents"]:
             file_contents.append(params['job_contents'])

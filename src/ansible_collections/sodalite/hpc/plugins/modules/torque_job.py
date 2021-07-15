@@ -63,6 +63,7 @@ jobs:
 
 from ansible.module_utils._text import to_text
 from ..module_utils import torque_utils
+from ..module_utils import date_utils
 from ..module_utils.hpc_module import HpcJobModule
 
 
@@ -86,69 +87,76 @@ class TorqueJobModule(HpcJobModule):
         file_contents = []
         file_contents.append(self.DIRECTIVE + ' -S ' + '/bin/bash')
         file_contents.append('## START OF HEADER ##')
-        if self.ansible.params["job_name"]:
-            file_contents.append(self.DIRECTIVE + ' -N ' + self.ansible.params['job_name'])
+        if params["job_name"]:
+            file_contents.append(self.DIRECTIVE + ' -N ' + params['job_name'])
         else:
             self.ansible.fail_json(
                 msg="Parameter 'job_name' is required"
             )
-        if self.ansible.params["account"]:
-            file_contents.append(self.DIRECTIVE + ' -A ' + self.ansible.params['account'])
-        if self.ansible.params["queue"]:
-            file_contents.append(self.DIRECTIVE + ' -q ' + self.ansible.params['queue'])
-        if self.ansible.params["wall_time_limit"]:
-            file_contents.append(self.DIRECTIVE + ' -l walltime=' + self.ansible.params['wall_time_limit'])
-        if self.ansible.params["node_count"]:
-            node_directive = self.DIRECTIVE + ' -l nodes=' + str(self.ansible.params['node_count'])
-            if self.ansible.params["process_count_per_node"]:
-                node_directive += ':ppn=' + str(self.ansible.params['process_count_per_node'])
-            if self.ansible.params["request_gpus"]:
+        if params["account"]:
+            file_contents.append(self.DIRECTIVE + ' -A ' + params['account'])
+        if params["queue"]:
+            file_contents.append(self.DIRECTIVE + ' -q ' + params['queue'])
+        if params["wall_time_limit"]:
+            torque_format = date_utils.convert_to_torque(params['wall_time_limit'])
+            if not torque_format:
+                self.ansible.fail_json(
+                    msg="Incorrect 'wall_time_limit' parameter format"
+                )
+            file_contents.append(self.DIRECTIVE + ' -l walltime=' + torque_format)
+        if params["node_count"]:
+            node_directive = self.DIRECTIVE + ' -l nodes=' + str(params['node_count'])
+            if params["process_count_per_node"]:
+                node_directive += ':ppn=' + str(params['process_count_per_node'])
+            if params["request_gpus"]:
                 # TODO
-                node_directive += ',gpus=' + str(self.ansible.params['request_gpus'])
-            if self.ansible.params["queue"]:
-                node_directive += ':' + str(self.ansible.params['queue'])
+                node_directive += ',gpus=' + str(params['request_gpus'])
+            if params["queue"]:
+                node_directive += ':' + str(params['queue'])
             file_contents.append(node_directive)
-        if self.ansible.params["core_count"]:
-            file_contents.append(self.DIRECTIVE + ' -l procs=' + str(self.ansible.params['core_count']))
-        if self.ansible.params["core_count_per_process"]:
+        if params["core_count"]:
+            file_contents.append(self.DIRECTIVE + ' -l procs=' + str(params['core_count']))
+        if params["core_count_per_process"]:
             pass
-        if self.ansible.params["memory_limit"]:
+        if params["memory_limit"]:
             # TODO unify memory inputs
-            file_contents.append(self.DIRECTIVE + ' -l mem=' + self.ansible.params['memory_limit'])
-        if self.ansible.params["minimum_memory_per_processor"]:
-            file_contents.append(self.DIRECTIVE + ' -l pmem=' + self.ansible.params['minimum_memory_per_processor'])
-        if self.ansible.params["request_specific_nodes"]:
-            file_contents.append(self.DIRECTIVE + ' -l nodes=' + self.ansible.params['request_specific_nodes'])
-        if self.ansible.params["job_array"]:
+            file_contents.append(self.DIRECTIVE + ' -l mem=' + params['memory_limit'])
+        if params["minimum_memory_per_processor"]:
+            file_contents.append(self.DIRECTIVE + ' -l pmem=' + params['minimum_memory_per_processor'])
+        if params["request_specific_nodes"]:
+            file_contents.append(self.DIRECTIVE + ' -l nodes=' + params['request_specific_nodes'])
+        if params["job_array"]:
             # TODO parse job array output
-            file_contents.append(self.DIRECTIVE + ' -t ' + self.ansible.params['job_array'])
-        if self.ansible.params["standard_output_file"]:
-            file_contents.append(self.DIRECTIVE + ' -o ' + self.ansible.params['standard_output_file'])
-        if self.ansible.params["standard_error_file"]:
-            file_contents.append(self.DIRECTIVE + ' -e ' + self.ansible.params['standard_error_file'])
-        if self.ansible.params["combine_stdout_stderr"]:
+            file_contents.append(self.DIRECTIVE + ' -t ' + params['job_array'])
+        if params["standard_output_file"]:
+            file_contents.append(self.DIRECTIVE + ' -o ' + params['standard_output_file'])
+        if params["standard_error_file"]:
+            file_contents.append(self.DIRECTIVE + ' -e ' + params['standard_error_file'])
+        if params["combine_stdout_stderr"]:
             file_contents.append(self.DIRECTIVE + ' -j oe')
-        if self.ansible.params["architecture_constraint"]:
-            file_contents.append(self.DIRECTIVE + ' -l partition=' + self.ansible.params['architecture_constraint'])
-        if self.ansible.params["copy_environment"]:
+        if params["architecture_constraint"]:
+            file_contents.append(self.DIRECTIVE + ' -l partition=' + params['architecture_constraint'])
+        if params["copy_environment"]:
             file_contents.append(self.DIRECTIVE + ' -V ')
-        if self.ansible.params["copy_environment_variable"]:
-            file_contents.append(self.DIRECTIVE + ' -v ' + self.ansible.params['copy_environment_variable'])
-        if self.ansible.params["job_dependency"]:
-            file_contents.append(self.DIRECTIVE + ' -W ' + self.ansible.params['job_dependency'])
-        if self.ansible.params["request_event_notification"]:
+        if params["copy_environment_variable"]:
+            file_contents.append(self.DIRECTIVE + ' -v ' + params['copy_environment_variable'])
+        if params["job_dependency"]:
+            file_contents.append(self.DIRECTIVE + ' -W ' + params['job_dependency'])
+        if params["request_event_notification"]:
             file_contents.append(self.DIRECTIVE + ' -m ' + self.convert_notifications(params['request_event_notification']))
-        if self.ansible.params["email_address"]:
-            file_contents.append(self.DIRECTIVE + ' -M ' + self.ansible.params['email_address'])
-        if self.ansible.params["defer_job"]:
+        if params["email_address"]:
+            file_contents.append(self.DIRECTIVE + ' -M ' + params['email_address'])
+        if params["defer_job"]:
             # TODO unify time inputs
-            file_contents.append(self.DIRECTIVE + ' -a ' + self.ansible.params['defer_job'])
-        if self.ansible.params["node_exclusive"]:
+            file_contents.append(self.DIRECTIVE + ' -a ' + params['defer_job'])
+        if params["node_exclusive"]:
             file_contents.append(self.DIRECTIVE + ' -l naccesspolicy=singlejob')
-
+        if params["job_options"]:
+            file_contents.append('## USER DEFINED OPTIONS ## ')
+            file_contents.append(params['job_options'])
         file_contents.append('## END OF HEADER ## ')
-        if self.ansible.params["job_contents"]:
-            file_contents.append(self.ansible.params['job_contents'])
+        if params["job_contents"]:
+            file_contents.append(params['job_contents'])
         return file_contents
 
     def convert_notifications(self, notifications):

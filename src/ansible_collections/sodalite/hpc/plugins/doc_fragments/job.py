@@ -127,6 +127,9 @@ options:
   defer_job:
     description:
       - Defer the allocation of the job until the specified time.
+      - A time limit of zero requests that no time limit be imposed.
+      - Acceptable time formats include "minutes", "minutes:seconds", "hours:minutes:seconds",
+        "days-hours", "days-hours:minutes" and "days-hours:minutes:seconds".
     type: str
   node_exclusive:
     description:
