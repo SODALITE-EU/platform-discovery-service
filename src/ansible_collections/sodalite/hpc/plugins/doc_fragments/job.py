@@ -48,6 +48,9 @@ options:
   wall_time_limit:
     description:
       - Set a limit on the total run time of the job allocation.
+      - A time limit of zero requests that no time limit be imposed.
+      - Acceptable time formats include "minutes", "minutes:seconds", "hours:minutes:seconds",
+        "days-hours", "days-hours:minutes" and "days-hours:minutes:seconds".
     type: str
   node_count:
     description:
@@ -127,9 +130,7 @@ options:
   defer_job:
     description:
       - Defer the allocation of the job until the specified time.
-      - A time limit of zero requests that no time limit be imposed.
-      - Acceptable time formats include "minutes", "minutes:seconds", "hours:minutes:seconds",
-        "days-hours", "days-hours:minutes" and "days-hours:minutes:seconds".
+      - "Acceptable time formats are: now+60 (seconds by default) or 2010-01-20T12:34:00"
     type: str
   node_exclusive:
     description:

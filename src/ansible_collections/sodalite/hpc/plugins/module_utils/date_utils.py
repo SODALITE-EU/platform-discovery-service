@@ -2,9 +2,10 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import re
-import datetime
+from datetime import datetime, timedelta
 
 regex_timespan = r"^((?P<days>\d+)-)?((?P<time1>\d+):)?((?P<time2>\d{2,}):)?((?P<time3>\d{2}))$"
+regex_defer_time = r"now\+(?P<seconds>\d+)"
 
 
 def validate(slurm_time):
@@ -45,4 +46,17 @@ def convert_to_torque(slurm_time):
 
 
 def convert_torque_datetime(torque_datetime):
-    return datetime.datetime.strptime(torque_datetime, '%a %b %d %H:%M:%S %Y').strftime("%Y-%m-%dT%H:%M:%S")
+    return datetime.strptime(torque_datetime, '%a %b %d %H:%M:%S %Y').strftime("%Y-%m-%dT%H:%M:%S")
+
+
+def convert_defer_time(defer_time):
+    try:
+        time = datetime.strptime(defer_time, "%Y-%m-%dT%H:%M:%S")
+        return time.strftime("%Y%m%d%H%M.%S")
+    except ValueError:
+        match = re.match(regex_defer_time, defer_time.strip(), re.IGNORECASE)
+        if match is not None:
+            time = datetime.now() + timedelta(seconds=int(match.group("seconds")))
+            return time.strftime("%Y%m%d%H%M.%S")
+
+    return None

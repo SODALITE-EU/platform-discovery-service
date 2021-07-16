@@ -146,6 +146,10 @@ class SlurmJobModule(HpcJobModule):
         if params["email_address"]:
             file_contents.append(self.DIRECTIVE + ' --mail-user=' + params['email_address'])
         if params["defer_job"]:
+            if not date_utils.convert_defer_time(params['defer_job']):
+                self.ansible.fail_json(
+                    msg="Incorrect 'defer_job' parameter format"
+                )
             file_contents.append(self.DIRECTIVE + ' --begin=' + params['defer_job'])
         if params["node_exclusive"]:
             file_contents.append(self.DIRECTIVE + ' --exclusive')

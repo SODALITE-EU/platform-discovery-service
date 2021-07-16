@@ -27,7 +27,7 @@ class TestTorqueJobModule(TestHPCModule):
             assert result.value.args[0]['changed'] is True
             assert len(result.value.args[0]['jobs']) == 1
             assert result.value.args[0]['jobs'][0]['job_id'] == '2310.cloudserver'
-            assert result.value.args[0]['jobs'][0]['job_state'] == 'R'
+            assert result.value.args[0]['jobs'][0]['job_state'] == 'RUNNING'
 
         mock_run_command.assert_has_calls([call("qsub my_job.torque"),
                                            call("qstat -f 2310.cloudserver"),
@@ -47,7 +47,7 @@ class TestTorqueJobModule(TestHPCModule):
             assert result.value.args[0]['changed'] is True
             assert len(result.value.args[0]['jobs']) == 1
             assert result.value.args[0]['jobs'][0]['job_id'] == '2310.cloudserver'
-            assert result.value.args[0]['jobs'][0]['job_state'] == 'H'
+            assert result.value.args[0]['jobs'][0]['job_state'] == 'SUSPENDED'
 
         mock_run_command.assert_has_calls([call("qstat -f 2310.cloudserver"),
                                            call("qhold 2310.cloudserver"),
@@ -68,7 +68,7 @@ class TestTorqueJobModule(TestHPCModule):
             assert result.value.args[0]['changed'] is True
             assert len(result.value.args[0]['jobs']) == 1
             assert result.value.args[0]['jobs'][0]['job_id'] == '2310.cloudserver'
-            assert result.value.args[0]['jobs'][0]['job_state'] == 'R'
+            assert result.value.args[0]['jobs'][0]['job_state'] == 'RUNNING'
 
         mock_run_command.assert_has_calls([call("qstat -f 2310.cloudserver"),
                                            call("qrls 2310.cloudserver"),
@@ -89,7 +89,7 @@ class TestTorqueJobModule(TestHPCModule):
             assert result.value.args[0]['changed'] is True
             assert len(result.value.args[0]['jobs']) == 1
             assert result.value.args[0]['jobs'][0]['job_id'] == '2310.cloudserver'
-            assert result.value.args[0]['jobs'][0]['job_state'] == 'C'
+            assert result.value.args[0]['jobs'][0]['job_state'] == 'COMPLETED'
 
         mock_run_command.assert_has_calls([call("qstat -f 2310.cloudserver"),
                                            call("qdel 2310.cloudserver"),

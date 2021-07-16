@@ -148,8 +148,7 @@ class TorqueJobModule(HpcJobModule):
         if params["email_address"]:
             file_contents.append(self.DIRECTIVE + ' -M ' + params['email_address'])
         if params["defer_job"]:
-            # TODO unify time inputs
-            file_contents.append(self.DIRECTIVE + ' -a ' + params['defer_job'])
+            file_contents.append(self.DIRECTIVE + ' -a ' + self.convert_defer(params['defer_job']))
         if params["node_exclusive"]:
             file_contents.append(self.DIRECTIVE + ' -l naccesspolicy=singlejob')
         if params["job_options"]:
@@ -164,6 +163,14 @@ class TorqueJobModule(HpcJobModule):
         result = "".join([self.NOTIFICATIONS[opt] for opt in notifications])
         return result
 
+    def convert_defer(self, time):
+        result = date_utils.convert_defer_time(time)
+        if not result:
+            self.ansible.fail_json(
+                msg="Incorrect 'defer_job' parameter format"
+            )
+        return result
+
     def create_job(self, filename):
         stdout = self.execute_command('qsub {}', filename)
 
@@ -175,7 +182,7 @@ class TorqueJobModule(HpcJobModule):
                 details=to_text(err),
             )
 
-        self.wait_state(job_id, ['W', 'R'])
+        self.wait_state(job_id, ['PENDING', 'RUNNING'])
 
         return True, self.get_job_info(job_id)
 
@@ -187,7 +194,7 @@ class TorqueJobModule(HpcJobModule):
 
         self.execute_command('qdel {0}', job_id)
 
-        new_state = self.wait_state(job_id, ['C'])
+        new_state = self.wait_state(job_id, ['COMPLETED'])
 
         return new_state != state, self.get_job_info(job_id)
 
@@ -196,7 +203,7 @@ class TorqueJobModule(HpcJobModule):
 
         self.execute_command('qhold {0}', job_id)
 
-        new_state = self.wait_state(job_id, ['W', 'H'])
+        new_state = self.wait_state(job_id, ['PENDING', 'SUSPENDED'])
 
         return new_state != state, self.get_job_info(job_id)
 
@@ -205,7 +212,7 @@ class TorqueJobModule(HpcJobModule):
 
         self.execute_command('qrls {0}', job_id)
 
-        new_state = self.wait_state(job_id, ['W', 'R'])
+        new_state = self.wait_state(job_id, ['PENDING', 'RUNNING'])
 
         return new_state != state, self.get_job_info(job_id)
 
