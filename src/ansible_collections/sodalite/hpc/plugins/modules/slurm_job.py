@@ -67,6 +67,7 @@ jobs:
 from ansible.module_utils._text import to_text
 from ..module_utils import slurm_utils
 from ..module_utils import date_utils
+from ..module_utils import unify
 from ..module_utils.hpc_module import HpcJobModule
 
 
@@ -227,7 +228,7 @@ class SlurmJobModule(HpcJobModule):
             )
 
         if len(job_info) == 1:
-            result["jobs"] = job_info
+            result["jobs"] = list(map(unify.transform_slurm_job_info, job_info))
             return result
         else:
             self.ansible.fail_json(

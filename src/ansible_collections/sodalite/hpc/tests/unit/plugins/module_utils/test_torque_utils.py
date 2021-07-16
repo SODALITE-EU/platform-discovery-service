@@ -29,15 +29,15 @@ class TestTorqueUtils:
         jobs = torque_utils.parse_job_output(torque_job_stdout_1_c)
         assert len(jobs) == 1
         assert jobs[0]['job_id'] == '2310.cloudserver'
-        assert jobs[0]['Job_Name'] == 'hpc-test-1'
-        assert jobs[0]['Job_Owner'] == 'user@cloudserver'
+        assert jobs[0]['job_name'] == 'hpc-test-1'
+        assert jobs[0]['job_owner'] == 'user@cloudserver'
         assert jobs[0]['job_state'] == 'C'
 
         jobs = torque_utils.parse_job_output(torque_job_stdout_2)
         assert len(jobs) == 2
         assert jobs[1]['job_id'] == '2311.cloudserver'
-        assert jobs[1]['Job_Name'] == 'hpc-test-1'
-        assert jobs[1]['Job_Owner'] == 'user@cloudserver'
+        assert jobs[1]['job_name'] == 'hpc-test-1'
+        assert jobs[1]['job_owner'] == 'user@cloudserver'
         assert jobs[1]['job_state'] == 'R'
 
     def test_torque_queue(self, torque_queue_stdout_1, torque_queue_stdout_2):

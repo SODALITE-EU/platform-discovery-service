@@ -2,6 +2,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import re
+import datetime
 
 regex_timespan = r"^((?P<days>\d+)-)?((?P<time1>\d+):)?((?P<time2>\d{2,}):)?((?P<time3>\d{2}))$"
 
@@ -41,3 +42,7 @@ def convert_to_torque(slurm_time):
         return format(hours, '02') + ':' + format(minutes, '02') + ':' + format(seconds, '02')
 
     return None
+
+
+def convert_torque_datetime(torque_datetime):
+    return datetime.datetime.strptime(torque_datetime, '%a %b %d %H:%M:%S %Y').strftime("%Y-%m-%dT%H:%M:%S")

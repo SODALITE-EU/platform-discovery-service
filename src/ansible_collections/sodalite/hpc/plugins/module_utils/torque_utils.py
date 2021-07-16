@@ -2,7 +2,6 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import re
-from .unify import torque_to_slurm
 
 
 regex_nodes = r"(?P<itemname>\S+)\n|((?P<name>\S+) = (?P<value>(.+\n?)))"
@@ -138,10 +137,7 @@ def parse_job_output(stdout):
             result.append(job)
         else:
             var_matches = re.finditer(regex_var_list, match.group("value"), re.IGNORECASE)
-            job[match.group("name")] = match.group("value").strip()
-
-    for job in result:
-        torque_to_slurm(job)
+            job[match.group("name").lower()] = match.group("value").strip()
 
     return result
 

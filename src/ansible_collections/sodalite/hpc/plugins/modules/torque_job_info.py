@@ -51,6 +51,7 @@ jobs:
 
 from ansible.module_utils._text import to_text
 from ..module_utils import torque_utils
+from ..module_utils import unify
 from ..module_utils.hpc_module import HpcModule
 
 
@@ -70,12 +71,15 @@ class TorqueJobInfoModule(HpcModule):
 
         result = {}
         try:
-            result["jobs"] = torque_utils.parse_job_output(stdout)
+            job_info = torque_utils.parse_job_output(stdout)
         except Exception as err:
             self.ansible.fail_json(
                 msg='Failed to parse qstat output',
                 details=to_text(err),
             )
+
+        result["jobs"] = list(map(unify.transform_torque_job_info, job_info))
+
         self.ansible.exit_json(changed=False, **result)
 
 
