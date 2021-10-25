@@ -9,9 +9,9 @@ paths:
   /discover:
     post:
       security:
-        - apiKey: [ ]      
-        - oauth2: [email] 
-      summary: Automatic discovery and modeling of infrastructural resources. 
+        - apiKey: [ ]
+        - oauth2: [email]
+      summary: Automatic discovery and modeling of infrastructural resources.
       operationId: discover
       requestBody:
         description: Endpoint information and access credentials.
@@ -32,25 +32,25 @@ paths:
           content:
             application/json:
               schema:
-                type: string                  
+                type: string
         401:
           description: Unauthorized request for discovery.
           content:
             application/json:
               schema:
-                type: string                   
+                type: string
         500:
           description: There was an error during discovery.
           content:
             application/json:
               schema:
-                type: string  
+                type: string
   /update:
     post:
       security:
-        - apiKey: [ ]      
-        - oauth2: [email] 
-      summary: Automatic discovery and update resource database. 
+        - apiKey: [ ]
+        - oauth2: [email]
+      summary: Automatic discovery and update resource database.
       operationId: discover_update
       requestBody:
         description: Endpoint information and access credentials.
@@ -71,24 +71,24 @@ paths:
           content:
             application/json:
               schema:
-                type: string                  
+                type: string
         401:
           description: Unauthorized request for update.
           content:
             application/json:
               schema:
-                type: string                   
+                type: string
         500:
           description: There was an error during update.
           content:
             application/json:
               schema:
-                type: string      
+                type: string
   /subscribe:
     post:
       security:
-        - apiKey: [ ]      
-        - oauth2: [email] 
+        - apiKey: [ ]
+        - oauth2: [email]
       summary: Subscription for receiving a notification about discovery and KB updates.
       operationId: subscribe
       requestBody:
@@ -110,21 +110,21 @@ paths:
           content:
             application/json:
               schema:
-                type: string                  
+                type: string
         401:
           description: Unauthorized request for subscription.
           content:
             application/json:
               schema:
-                type: string                   
+                type: string
         500:
           description: There was an error during subscription.
           content:
             application/json:
               schema:
-                type: string                  
-       
- 
+                type: string
+
+
 components:
   schemas:
     DiscoveryInput:
@@ -139,7 +139,7 @@ components:
           type: object
         namespace:
           description: The namespace name in which resource and application models will be saved.
-          type: string          
+          type: string
         platform_type:
           $ref: "#/components/schemas/PlatformType"
     DiscoveryOutput:
@@ -161,8 +161,8 @@ components:
         - slurm
         - torque
         - openstack
-        - aws          
-        - kubernetes       
+        - aws
+        - kubernetes
     UpdateInput:
       description: Endpoint information and access credentials provided as inputs.
       type: object
@@ -175,13 +175,13 @@ components:
           type: object
         namespace:
           description: The namespace name in which resource and application models will be saved.
-          type: string          
+          type: string
         aadm_uri:
           description: AADM URI to update (optional).
           type: string
         rm_uri:
           description: RM URI to update (optional).
-          type: string          
+          type: string
         platform_type:
           $ref: "#/components/schemas/PlatformType"
     UpdateOutput:
@@ -203,7 +203,7 @@ components:
       properties:
         namespace:
           description: The namespace name to be subscribed to.
-          type: string 
+          type: string
         endpoint:
           description: An endpoint, where a notification will be sent to
           type: string
@@ -222,15 +222,15 @@ components:
   securitySchemes:
     apiKey:
       type: apiKey
-      x-apikeyInfoFunc: pds.api.controllers.security.check_api_key
+      x-apikeyInfoFunc: pds.api.service.security.check_api_key
       name: X-API-Key
-      in: header  
+      in: header
     oauth2:
       flows:
-        password: 
+        password:
           tokenUrl: http://keycloak:8080/auth/realms/SODALITE/protocol/openid-connect/token
           scopes:
             email: Email of the user accessing the service.
       type: oauth2
-      x-tokenInfoFunc: pds.api.controllers.security.token_info
-      x-scopeValidateFunc: pds.api.controllers.security.validate_scope      
+      x-tokenInfoFunc: pds.api.service.security.token_info
+      x-scopeValidateFunc: pds.api.service.security.validate_scope

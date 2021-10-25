@@ -4,7 +4,7 @@ COPY . /build/
 RUN /build/generate.sh
 
 
-FROM python:3.8.7-alpine3.13
+FROM python:3.10.0rc1-alpine3.13
 WORKDIR /app
 COPY requirements.txt /app/
 
@@ -36,7 +36,11 @@ RUN ansible-galaxy collection build --force \
 
 WORKDIR /ansible_collections/sodalite/hpc/
 RUN ansible-galaxy collection build --force \
-    && ansible-galaxy collection install sodalite-hpc-0.1.0.tar.gz --force  
+    && ansible-galaxy collection install sodalite-hpc-1.0.0.tar.gz --force
+
+RUN chmod 755 /root
+ENV ANSIBLE_ROLES_PATH=/root/.ansible/roles:$ANSIBLE_ROLES_PATH
+ENV ANSIBLE_COLLECTIONS_PATH=/root/.ansible/collections:$ANSIBLE_COLLECTIONS_PATH
 
 WORKDIR /app
 ENTRYPOINT ["python3"]
