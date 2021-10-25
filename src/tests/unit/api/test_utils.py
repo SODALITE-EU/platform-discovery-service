@@ -3,7 +3,6 @@ import pds.api.utils.templates as templates
 import pds.api.utils.inputs as inputs
 from unittest.mock import MagicMock
 from pds.api.utils.notifier import Notifier
-from pds.api.utils.environment import DeploymentEnvironment
 from pds.api.openapi.models.platform_type import PlatformType
 from pds.api.openapi.models.subscription_input import SubscriptionInput
 from requests import RequestException
@@ -12,29 +11,15 @@ from requests import Response
 
 class TestUtils:
     @pytest.fixture
-    def inputs_dict_full(self):
-        inputs = {
-                "frontend-address": "14.15.11.12",
-                "user": "alexander",
-                "_get_secret_ssh": "pds/ssh_key_slurm:pds",
-                "_ssh_password": "my_password",
-                "namespace": "TestSlurm",
-                "_storage_key": "TEST_STORAGE_KEY"
-                }
-
-        return inputs
-
-    @pytest.fixture
     def inputs_dict_ssh(self):
         inputs = {
-                "frontend-address": "14.15.11.12",
-                "user": "alexander",
-                "_get_secret_ssh": "pds/ssh_key_slurm:pds",
-                "_ssh_password": "my_password",
-                "namespace": "TestSlurm"
-                }
+                  "frontend-address": "14.15.11.12",
+                  "user": "alexander",
+                  "_get_secret_ssh": "pds/ssh_key_slurm:pds",
+                  "namespace": "TestSlurm"
+                 }
 
-        return inputs        
+        return inputs
 
     @pytest.fixture
     def inputs_dict_simple(self):
@@ -44,7 +29,7 @@ class TestUtils:
                 "namespace": "TestSlurm"
                 }
 
-        return inputs  
+        return inputs
 
     @pytest.fixture
     def subscription_test_inputs(self):
@@ -52,7 +37,7 @@ class TestUtils:
             "only_endpoint": SubscriptionInput("namespace-1", "http://some-host.de:7777/abc"),
             "endpoint_with_payload": SubscriptionInput("namespace-1","http://some-host.de:6666/abc", { "some": "data" }),
             "different_namespace": SubscriptionInput("namespace-2","http://some-host.de:5555/abc"),
-        }       
+        }
 
     def test_templates(self, flask_app):
         with flask_app.app.app_context():
@@ -67,40 +52,6 @@ class TestUtils:
             bp_name = templates.get_service_template(PlatformType.KUBERNETES)
             assert bp_name[1] == "kubernetes_info.yaml"
 
-    def test_environment_setup(self, mocker, flask_app):
-        with flask_app.app.app_context():
-            mocker.patch("pds.api.utils.environment.opera_deploy")
-            mocker.patch("pds.api.utils.environment.opera_undeploy")
-            mocker.patch("os.chdir")
-            ssh_keys = [("TEST_KEY", "TEST_PASS")]
-            env = DeploymentEnvironment()
-            env.setup(ssh_keys)
-            assert len(env.deployments) == 1
-            env.cleanup()
-            assert len(env.deployments) == 1
-
-    def test_preprocess_both_keys(self, mocker, flask_app, inputs_dict_full):
-        def get_json():
-            return {
-                        "data":
-                        {
-                            "_ssh_key": "test"
-                        }
-                    }
-        with flask_app.app.app_context():
-            get_response = MagicMock()
-            get_response.json = get_json
-            mocker.patch("pds.api.utils.inputs.session.get",
-                         return_value=get_response)
-            mocker.patch("pds.api.utils.inputs.session.post")
-            result = inputs.preprocess_inputs(inputs_dict_full,
-                                              "ACCESS_TOKEN",
-                                              "testNamespace")
-            assert len(result[0]) == 3
-            assert len(result[1]) == 1
-            assert result[1][0][0] == "test"
-            assert result[1][0][1] == inputs_dict_full["_ssh_password"]
-
     def test_preprocess_ssh(self, mocker, flask_app, inputs_dict_ssh):
         def get_json():
             return {
@@ -108,20 +59,19 @@ class TestUtils:
                         {
                             "_ssh_key": "test"
                         }
-                    }
+                   }
         with flask_app.app.app_context():
             get_response = MagicMock()
             get_response.json = get_json
-            mocker.patch("pds.api.utils.inputs.session.get",
+            mocker.patch("pds.api.utils.vault_client.session.get",
                          return_value=get_response)
-            mocker.patch("pds.api.utils.inputs.session.post")
+            mocker.patch("pds.api.utils.vault_client.session.post")
             result = inputs.preprocess_inputs(inputs_dict_ssh,
                                               "ACCESS_TOKEN",
                                               "testNamespace")
             assert len(result[0]) == 3
             assert len(result[1]) == 1
-            assert result[1][0][0] == "test"
-            assert result[1][0][1] == inputs_dict_ssh["_ssh_password"]
+            assert result[1][0] == "test"
 
     def test_preprocess_simple(self, mocker, flask_app, inputs_dict_simple):
         with flask_app.app.app_context():
