@@ -1,4 +1,4 @@
-tosca_definitions_version: tosca_simple_yaml_1_3 
+tosca_definitions_version: tosca_simple_yaml_1_3
 
 capability_types:
 
@@ -29,20 +29,21 @@ node_types:
       name:
         type: string
         required: true
-    capabilities:      
+    capabilities:
       resources:
-        type: {{ namespace }}/sodalite.capabilities.JobResources        
+        type: {{ namespace }}/sodalite.capabilities.JobResources
       os:
-        type: tosca.capabilities.OperatingSystem     
+        type: tosca.capabilities.OperatingSystem
     requirements:
-      - wm:                   
+      - wm:
           node: {{ namespace }}/sodalite.nodes.hpc.TorqueWM
           capability: {{ namespace }}/sodalite.capabilities.WM
-          relationship: tosca.relationships.AttachesTo
-      - queue:                   
+          relationship: tosca.relationships.DependsOn
+      - queue:
           node: {{ namespace }}/sodalite.nodes.hpc.TorqueQueue
           capability: {{ namespace }}/sodalite.capabilities.Queue
-          relationship: tosca.relationships.AttachesTo            
+          relationship: tosca.relationships.DependsOn
+          occurrences: [ 0, UNBOUNDED ]
 
   {{ namespace }}/sodalite.nodes.hpc.TorqueQueue:
     derived_from: tosca.nodes.Compute
@@ -50,16 +51,16 @@ node_types:
       name:
         type: string
         required: true
-    capabilities:      
+    capabilities:
       resources:
         type: {{ namespace }}/sodalite.capabilities.JobResources
     requirements:
-      - wm:                   
+      - wm:
           node: {{ namespace }}/sodalite.nodes.hpc.TorqueWM
           capability: {{ namespace }}/sodalite.capabilities.WM
-          relationship: tosca.relationships.AttachesTo
+          relationship: tosca.relationships.DependsOn
 
-  {{ namespace }}/sodalite.nodes.hpc.TorqueWM: 
+  {{ namespace }}/sodalite.nodes.hpc.TorqueWM:
     description: >
       Torque wm, here we can define properties/attributes applicable for Torque WM
     derived_from: tosca.nodes.Compute
@@ -72,7 +73,7 @@ node_types:
       host:
         type: tosca.capabilities.Compute
       resources:
-        type: {{ namespace }}/sodalite.capabilities.JobResources  
+        type: {{ namespace }}/sodalite.capabilities.JobResources
 
 topology_template:
 
@@ -87,34 +88,36 @@ topology_template:
 {% set total_gpus = [0] -%}
 {% set total_cpus = [0] -%}
 {% set total_memory = [0] -%}
-{% for node in node_info.torque_node %}
+{% for node in node_info.nodes %}
     {{ namespace }}/node-hpc-{{ node.node_name | replace(" ","-") }}:
       type: {{ namespace }}/sodalite.nodes.hpc.TorqueNode
       properties:
         name: {{ node.node_name }}
-      capabilities:    
+      capabilities:
         resources:
-          gpus: {{ node.gpus }} 
-          cpus: {{ node.status.ncpus }}
-          memory: {{ node.status.totmem }}
+          properties:
+            gpus: {{ node.gpus }}
+            cpus: {{ node.status.ncpus }}
+            memory: {{ node.status.totmem }}
         os:
-          type: {{ node.status.opsys }} 
+          properties:
+            type: {{ node.status.opsys }}
       requirements:
         - wm: {{ namespace }}/hpc-wm-torque-wm
 {% for queue in node.properties %}
         - queue: {{ namespace }}/queue-hpc-{{ queue | replace(" ","-") }}
 {% endfor %}
-             
+
 {% if total_gpus.append(total_gpus.pop() + node.gpus|int) -%}{% endif %}
 {% if total_cpus.append(total_cpus.pop() + node.status.ncpus|int) -%}{% endif %}
 {% if total_memory.append(total_memory.pop() + node.status.totmem|int) -%}{% endif %}
 
 {% endfor %}
-{% for queue in queue_info.torque_queue %}
+{% for queue in queue_info.queues %}
 {% set queue_gpus = [0] -%}
 {% set queue_cpus = [0] -%}
 {% set queue_memory = [0] -%}
-{% for node in node_info.torque_node %}
+{% for node in node_info.nodes %}
 {% if (queue.queue_name in node.properties) -%}
 {% if queue_gpus.append(queue_gpus.pop() + node.gpus|int) -%}{% endif %}
 {% if queue_cpus.append(queue_cpus.pop() + node.status.ncpus|int) -%}{% endif %}
@@ -125,13 +128,14 @@ topology_template:
       type: {{ namespace }}/sodalite.nodes.hpc.TorqueQueue
       properties:
         name: {{ queue.queue_name }}
-      capabilities:    
+      capabilities:
         resources:
-          gpus: {{ queue_gpus[0] }} 
-          cpus: {{ queue_cpus[0] }}
-          memory: {{ queue_memory[0] }}           
+          properties:
+            gpus: {{ queue_gpus[0] }}
+            cpus: {{ queue_cpus[0] }}
+            memory: {{ queue_memory[0] }}
       requirements:
-        - wm: {{ namespace }}/hpc-wm-torque-wm  
+        - wm: {{ namespace }}/hpc-wm-torque-wm
 
 {% endfor %}
 
@@ -141,8 +145,9 @@ topology_template:
         public_address: {{ frontend_address }}
         username: { get_input: user }
         ssh-key: { get_input: key-location }
-      capabilities:    
+      capabilities:
         resources:
-          gpus: {{ total_gpus[0] }} 
-          cpus: {{ total_cpus[0] }}
-          memory: {{ total_memory[0] }}
+          properties:
+            gpus: {{ total_gpus[0] }}
+            cpus: {{ total_cpus[0] }}
+            memory: {{ total_memory[0] }}
