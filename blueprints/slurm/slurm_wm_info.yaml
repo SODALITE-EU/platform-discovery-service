@@ -1,8 +1,8 @@
-tosca_definitions_version: tosca_simple_yaml_1_3 
+tosca_definitions_version: tosca_simple_yaml_1_3
 
 node_types:
-  
-  sodalite.nodes.hpc.wm.slurm: 
+
+  sodalite.nodes.hpc.wm.slurm:
     description: >
       slurm wm, here we can define properties/attributes applicable for slurm WM
     derived_from: tosca.nodes.Compute
@@ -10,18 +10,18 @@ node_types:
       username:
         type: string
 
-  sodalite.nodes.hpc.wm.slurm.info: 
+  sodalite.nodes.hpc.wm.slurm.info:
     derived_from: tosca.nodes.Root
     requirements:
       - host:
           node: sodalite.nodes.hpc.wm.slurm
           capability: tosca.capabilities.Compute
-          relationship: tosca.relationships.HostedOn   
+          relationship: tosca.relationships.HostedOn
     attributes:
       node_info:
-        type: string      
+        type: string
       partition_info:
-        type: string           
+        type: string
     interfaces:
         Standard:
           type: tosca.interfaces.node.lifecycle.Standard
@@ -29,28 +29,30 @@ node_types:
             create:
               inputs:
                 wm_public_address:           { type: string, default: { get_attribute: [SELF, host, public_address] } }
-                wm_username:                 { type: string, default: { get_attribute: [SELF, host, username] } }                
-              implementation: 
+                wm_username:                 { type: string, default: { get_attribute: [SELF, host, username] } }
+              implementation:
                 primary: playbooks/slurm_get_info.yml
 
 
-  sodalite.nodes.hpc.wm.slurm.transform: 
+  sodalite.nodes.hpc.wm.slurm.transform:
     derived_from: tosca.nodes.Root
     properties:
       namespace:
-        type: string 
+        type: string
+      fast_disk_map:
+        type: map
     attributes:
       transformation_result:
-        type: string    
+        type: string
     requirements:
       - wm:
           node: sodalite.nodes.hpc.wm.slurm
           capability: tosca.capabilities.Root
-          relationship: tosca.relationships.DependsOn  
+          relationship: tosca.relationships.DependsOn
       - info:
           node: sodalite.nodes.hpc.wm.slurm.info
           capability: tosca.capabilities.Root
-          relationship: tosca.relationships.DependsOn   
+          relationship: tosca.relationships.DependsOn
     interfaces:
         Standard:
           type: tosca.interfaces.node.lifecycle.Standard
@@ -61,10 +63,11 @@ node_types:
                 namespace:                     { type: string, default: { get_property: [SELF, namespace] } }
                 node_info:                     { type: string, default: { get_attribute: [SELF, info, node_info] } }
                 partition_info:                { type: string, default: { get_attribute: [SELF, info, partition_info] } }
-              implementation: 
+                fast_disk_map:                 { type: string, default: { get_attribute: [SELF, fast_disk_map] } }
+              implementation:
                 primary: playbooks/slurm_transform_info.yml
-                dependencies: 
-                  - artifacts/slurm.j2.yaml                
+                dependencies:
+                  - artifacts/slurm.j2.yaml
 
 topology_template:
 
@@ -78,12 +81,15 @@ topology_template:
     key-value:
       type: string
     namespace:
-      type: string    
-      
+      type: string
+    fast-disk-map:
+      type: map
+      default:
+
     ssh-key:
       type: string
     ssh-key-password:
-      type: string         
+      type: string
 
   node_templates:
 
@@ -96,17 +102,18 @@ topology_template:
     hpc-wm-slurm-info:
       type: sodalite.nodes.hpc.wm.slurm.info
       requirements:
-        - host: hpc-wm-slurm         
+        - host: hpc-wm-slurm
 
     hpc-wm-slurm-transform:
       type: sodalite.nodes.hpc.wm.slurm.transform
       properties:
         namespace: { get_input: namespace }
+        fast_disk_map: { get_input: fast-disk-map }
       requirements:
-        - info: hpc-wm-slurm-info  
-        - wm: hpc-wm-slurm 
-                
+        - info: hpc-wm-slurm-info
+        - wm: hpc-wm-slurm
+
 
   outputs:
-    output-slurm-tosca:      
-      value: { get_attribute: [ hpc-wm-slurm-transform, transformation_result ] }        
+    output-slurm-tosca:
+      value: { get_attribute: [ hpc-wm-slurm-transform, transformation_result ] }
