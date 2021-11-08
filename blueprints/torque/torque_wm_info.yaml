@@ -1,8 +1,8 @@
-tosca_definitions_version: tosca_simple_yaml_1_3 
+tosca_definitions_version: tosca_simple_yaml_1_3
 
 node_types:
-  
-  sodalite.nodes.hpc.wm.torque: 
+
+  sodalite.nodes.hpc.wm.torque:
     description: >
       torque wm, here we can define properties/attributes applicable for torque WM
     derived_from: tosca.nodes.Compute
@@ -10,18 +10,18 @@ node_types:
       username:
         type: string
 
-  sodalite.nodes.hpc.wm.torque.info: 
+  sodalite.nodes.hpc.wm.torque.info:
     derived_from: tosca.nodes.Root
     requirements:
       - host:
           node: sodalite.nodes.hpc.wm.torque
           capability: tosca.capabilities.Compute
-          relationship: tosca.relationships.HostedOn   
+          relationship: tosca.relationships.HostedOn
     attributes:
       node_info:
-        type: string      
+        type: string
       queue_info:
-        type: string           
+        type: string
     interfaces:
         Standard:
           type: tosca.interfaces.node.lifecycle.Standard
@@ -29,28 +29,28 @@ node_types:
             create:
               inputs:
                 wm_public_address:           { type: string, default: { get_attribute: [SELF, host, public_address] } }
-                wm_username:                 { type: string, default: { get_attribute: [SELF, host, username] } }                
-              implementation: 
+                wm_username:                 { type: string, default: { get_attribute: [SELF, host, username] } }
+              implementation:
                 primary: playbooks/torque_get_info.yml
 
 
-  sodalite.nodes.hpc.wm.torque.transform: 
+  sodalite.nodes.hpc.wm.torque.transform:
     derived_from: tosca.nodes.Root
     properties:
       namespace:
-        type: string 
+        type: string
     attributes:
       transformation_result:
-        type: string    
+        type: string
     requirements:
       - wm:
           node: sodalite.nodes.hpc.wm.torque
           capability: tosca.capabilities.Root
-          relationship: tosca.relationships.DependsOn  
+          relationship: tosca.relationships.DependsOn
       - info:
           node: sodalite.nodes.hpc.wm.torque.info
           capability: tosca.capabilities.Root
-          relationship: tosca.relationships.DependsOn   
+          relationship: tosca.relationships.DependsOn
     interfaces:
         Standard:
           type: tosca.interfaces.node.lifecycle.Standard
@@ -61,10 +61,10 @@ node_types:
                 namespace:                     { type: string, default: { get_property: [SELF, namespace] } }
                 node_info:                     { type: string, default: { get_attribute: [SELF, info, node_info] } }
                 queue_info:                    { type: string, default: { get_attribute: [SELF, info, queue_info] } }
-              implementation: 
+              implementation:
                 primary: playbooks/torque_transform_info.yml
-                dependencies: 
-                  - artifacts/torque.j2.yaml                
+                dependencies:
+                  - artifacts/torque.j2.yaml
 
 topology_template:
 
@@ -74,7 +74,10 @@ topology_template:
     user:
       type: string
     namespace:
-      type: string      
+      type: string
+    fast-disk-map:
+      type: map
+      default:
 
   node_templates:
 
@@ -87,17 +90,18 @@ topology_template:
     hpc-wm-torque-info:
       type: sodalite.nodes.hpc.wm.torque.info
       requirements:
-        - host: hpc-wm-torque         
+        - host: hpc-wm-torque
 
     hpc-wm-torque-transform:
       type: sodalite.nodes.hpc.wm.torque.transform
       properties:
         namespace: { get_input: namespace }
+        fast_disk_map: { get_input: fast-disk-map }
       requirements:
-        - info: hpc-wm-torque-info  
-        - wm: hpc-wm-torque 
-                
+        - info: hpc-wm-torque-info
+        - wm: hpc-wm-torque
+
 
   outputs:
-    output-torque-tosca:      
-      value: { get_attribute: [ hpc-wm-torque-transform, transformation_result ] }        
+    output-torque-tosca:
+      value: { get_attribute: [ hpc-wm-torque-transform, transformation_result ] }

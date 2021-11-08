@@ -3,13 +3,13 @@ tosca_definitions_version: tosca_simple_yaml_1_3
 capability_types:
 
   {{ namespace }}/sodalite.capabilities.Queue:
-    derived_from: tosca.capabilities.Compute
+    derived_from: tosca.capabilities.Root
 
   {{ namespace }}/sodalite.capabilities.WM:
-    derived_from: tosca.capabilities.Compute
+    derived_from: tosca.capabilities.Root
 
   {{ namespace }}/sodalite.capabilities.JobResources:
-    derived_from: tosca.capabilities.Compute
+    derived_from: tosca.capabilities.Root
     properties:
       gpus:
         type: integer
@@ -20,6 +20,13 @@ capability_types:
       memory:
         type: integer
         required: false
+
+  {{ namespace }}/sodalite.capabilities.FastDisk:
+    derived_from: tosca.capabilities.Root
+    properties:
+      mounting_point:
+        type: string
+        required: true
 
 node_types:
 
@@ -34,6 +41,8 @@ node_types:
         type: {{ namespace }}/sodalite.capabilities.JobResources
       os:
         type: tosca.capabilities.OperatingSystem
+      fast_disk:
+        type: {{ namespace }}/sodalite.capabilities.FastDisk
     requirements:
       - wm:
           node: {{ namespace }}/sodalite.nodes.hpc.TorqueWM
@@ -54,6 +63,8 @@ node_types:
     capabilities:
       resources:
         type: {{ namespace }}/sodalite.capabilities.JobResources
+      fast_disk:
+        type: {{ namespace }}/sodalite.capabilities.FastDisk
     requirements:
       - wm:
           node: {{ namespace }}/sodalite.nodes.hpc.TorqueWM
@@ -74,6 +85,8 @@ node_types:
         type: tosca.capabilities.Compute
       resources:
         type: {{ namespace }}/sodalite.capabilities.JobResources
+      fast_disk:
+        type: {{ namespace }}/sodalite.capabilities.FastDisk
 
 topology_template:
 
@@ -102,6 +115,11 @@ topology_template:
         os:
           properties:
             type: {{ node.status.opsys }}
+{% if fast_disk_map and node.node_name in fast_disk_map %}
+        fast_disk:
+          properties:
+            mounting_point: {{ fast_disk_map[node.node_name] }}
+{% endif %}
       requirements:
         - wm: {{ namespace }}/hpc-wm-torque-wm
 {% for queue in node.properties %}
@@ -134,6 +152,11 @@ topology_template:
             gpus: {{ queue_gpus[0] }}
             cpus: {{ queue_cpus[0] }}
             memory: {{ queue_memory[0] }}
+{% if fast_disk_map and queue.queue_name in fast_disk_map %}
+        fast_disk:
+          properties:
+            mounting_point: {{ fast_disk_map[queue.queue_name] }}
+{% endif %}
       requirements:
         - wm: {{ namespace }}/hpc-wm-torque-wm
 
@@ -151,3 +174,9 @@ topology_template:
             gpus: {{ total_gpus[0] }}
             cpus: {{ total_cpus[0] }}
             memory: {{ total_memory[0] }}
+{% if fast_disk_map and "wm" in fast_disk_map %}
+        fast_disk:
+          properties:
+            mounting_point: {{ fast_disk_map["wm"] }}
+{% endif %}
+
