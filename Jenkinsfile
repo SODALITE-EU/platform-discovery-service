@@ -133,20 +133,20 @@ pipeline {
                     """
             }
         }
-        stage('Push Platform Discovery Service to SODALITE registry') {
+        stage('Push Platform Discovery Service to DockerHub for staging') {
             when {
                 allOf {
                     // Triggered on every tag, that is considered for staging or production
                     expression{tag "*"}
                     expression{
-                        TAG_STAGING == 'true' || TAG_PRODUCTION == 'true'
+                        TAG_STAGING == 'true'
                     }
                 }
              }
             steps {
                 withDockerRegistry(credentialsId: 'jenkins-sodalite.docker_token', url: '') {
                     sh  """#!/bin/bash
-                            ./make_docker.sh push platform-discovery-service staging
+                            ./make_docker.sh push platform-discovery-service sodaliteh2020 staging
                         """
                 }
             }
@@ -164,7 +164,7 @@ pipeline {
             steps {
                 withDockerRegistry(credentialsId: 'jenkins-sodalite.docker_token', url: '') {
                     sh  """#!/bin/bash
-                            ./make_docker.sh push platform-discovery-service production
+                            ./make_docker.sh push platform-discovery-service sodaliteh2020 production
                         """
                 }
             }

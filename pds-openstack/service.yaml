@@ -6,7 +6,6 @@ imports:
   - modules/docker/docker_network.yaml
   - modules/docker/docker_registry.yaml
   - modules/docker/docker_component.yaml
-  - modules/docker/docker_certificate.yaml
 
 topology_template:
 
@@ -26,8 +25,6 @@ topology_template:
     docker-network: 
       type: string
     docker-public-registry-url: 
-      type: string
-    docker-private-registry-url:
       type: string
     docker-registry-cert-country-name:
       type: string
@@ -92,25 +89,6 @@ topology_template:
         - host: sodalite-vm
         - dependency: docker-host
 
-    docker-private-registry:
-      type: sodalite.nodes.DockerRegistry
-      properties:
-        docker_registry_url: { get_input: docker-private-registry-url }
-      requirements:
-        - host: sodalite-vm
-        - dependency: docker-host
-
-    docker-registry-certificate:
-      type: sodalite.nodes.RegistryCertificate
-      properties:
-        registry_ip:       { get_input: docker-private-registry-url }
-        country_name:      { get_input: docker-registry-cert-country-name }
-        organization_name: { get_input: docker-registry-cert-organization-name }
-        email_address:     { get_input: docker-registry-cert-email-address }
-      requirements:
-        - host: sodalite-vm
-        - dependency: docker-host
-
     # platform-discovery-service
     # https://github.com/SODALITE-EU/platform-discovery-service
     platform-discovery-service:
@@ -118,11 +96,11 @@ topology_template:
       properties:
         alias: pds
         docker_network_name: { get_property: [ SELF, network, name ] }
-        image_name: platform-discovery-service
+        image_name: sodaliteh2020/platform-discovery-service
         restart_policy: always
         ports: [ '8089:8081' ]
         env: { get_input: pds_env }
       requirements:
         - host: docker-host
         - network: docker-network
-        - registry: docker-private-registry
+        - registry: docker-public-registry
