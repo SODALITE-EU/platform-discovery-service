@@ -3,7 +3,7 @@ __metaclass__ = type
 
 from ansible.module_utils import basic
 from ansible_collections.sodalite.hpc.plugins.modules import wm_info
-from mock import patch, call
+from unittest.mock import patch, call
 import pytest
 
 from .utils import (

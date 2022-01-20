@@ -6,7 +6,7 @@ import json
 
 from ansible.module_utils import basic
 from ansible.module_utils.common.text.converters import to_bytes
-from mock import patch
+from unittest.mock import patch
 
 
 def set_module_args(args):

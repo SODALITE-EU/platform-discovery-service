@@ -3,7 +3,7 @@ __metaclass__ = type
 
 from ansible.module_utils import basic
 from ansible_collections.sodalite.hpc.plugins.modules import slurm_partition_info
-from mock import patch
+from unittest.mock import patch
 import pytest
 
 from .utils import (
