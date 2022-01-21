@@ -4,7 +4,7 @@ COPY . /build/
 RUN /build/generate.sh
 
 
-FROM python:3.10-alpine3.13
+FROM python:3.10.2-alpine3.15
 WORKDIR /app
 COPY requirements.txt /app/
 
