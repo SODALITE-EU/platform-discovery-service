@@ -13,3 +13,4 @@ setuptools
 openshift
 openstacksdk==0.52.0
 validators
+rsa>=4.7 # not directly required, pinned by Snyk to avoid a vulnerability
